@@ -1,0 +1,10 @@
+openssl_conf = openssl_init
+
+[openssl_init]
+engines = engine_section
+
+[engine_section]
+dstu = dstu_section
+
+[dstu_section]
+dynamic_path = @CMAKE_BINARY_DIR@/src/dstu.so
