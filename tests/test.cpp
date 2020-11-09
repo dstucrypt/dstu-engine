@@ -1,5 +1,6 @@
 #include <openssl/evp.h>
 #include <openssl/pem.h>
+#include <openssl/cms.h>
 #include <openssl/engine.h>
 #include <openssl/err.h>
 #include <openssl/conf.h>
@@ -46,6 +47,22 @@ unsigned char fromHex(char a)
 unsigned char fromHex(char a, char b)
 {
     return fromHex(a) * 16 + fromHex(b);
+}
+
+std::vector<unsigned char> makeBlock(const std::string& hex)
+{
+    std::vector<unsigned char> res;
+    for (size_t i = 0; i < hex.size();)
+    {
+        if (hex[i] == ' ')
+        {
+            ++i;
+            continue;
+        }
+        res.push_back(fromHex(hex[i], hex[i + 1]));
+        i += 2;
+    }
+    return res;
 }
 
 void checkBlock(const void* data, size_t size, const std::string& hexEtalon)
@@ -211,91 +228,63 @@ std::vector<unsigned char> decrypt(ENGINE* engine, const void* data, size_t size
     return res;
 }
 
-struct Seal
+std::vector<unsigned char> sign(ENGINE* engine, const EVP_MD* md, EVP_PKEY* priv, const void* data, size_t size)
 {
-    Seal(size_t ivSize, size_t dataSize) : ekl(0), iv(ivSize), data(dataSize) {}
-    size_t ekl;
-    std::vector<unsigned char> iv;
-    std::vector<unsigned char> data;
-};
-
-Seal seal(ENGINE* engine, EVP_PKEY* pk, const void* data, size_t size)
-{
-    auto* ctx = EVP_CIPHER_CTX_new();
-    if (ctx == nullptr)
-        throw std::runtime_error("seal: failed to create cipher context. " + OPENSSLError());
-
-    auto* cipher = EVP_aes_256_cbc();
-
-    Seal res(EVP_CIPHER_iv_length(cipher), EVP_PKEY_size(pk));
-
-    std::vector<unsigned char> ek(res.ekl);
-    unsigned char* ivPtr = res.iv.size() == 0 ? nullptr : res.iv.data();
-    unsigned char* ekPtr = ek.data();
-    int eks = ek.size();
-    if (EVP_SealInit(ctx, EVP_aes_256_cbc(), &ekPtr, &eks, ivPtr, &pk, 1) == 0)
+    auto* mdctx = EVP_MD_CTX_create();
+    if (mdctx == nullptr)
+        throw std::runtime_error("sign: failed to create digest context. " + OPENSSLError());
+    if (EVP_DigestSignInit(mdctx, nullptr, md, engine, priv) == 0)
     {
-        EVP_CIPHER_CTX_free(ctx);
-        throw std::runtime_error("seal: failed to initialize encryption. " + OPENSSLError());
+        EVP_MD_CTX_destroy(mdctx);
+        throw std::runtime_error("sign: failed to initialize signature. " + OPENSSLError());
     }
-    res.ekl = eks;
-
-    unsigned char* ptr = res.data.data();
-    int size1 = 0;
-    if (EVP_SealUpdate(ctx, ptr, &size1, static_cast<const unsigned char*>(data), size) == 0)
+    if (EVP_DigestSignUpdate(mdctx, data, size) == 0)
     {
-        EVP_CIPHER_CTX_free(ctx);
-        throw std::runtime_error("seal: failed to encrypt data. " + OPENSSLError());
+        EVP_MD_CTX_destroy(mdctx);
+        throw std::runtime_error("sign: failed to update signature. " + OPENSSLError());
     }
-
-    int size2 = 0;
-    if (EVP_SealFinal(ctx, ptr + size1, &size2) == 0)
+    size_t len = 0;
+    if (EVP_DigestSignFinal(mdctx, nullptr, &len) == 0)
     {
-        EVP_CIPHER_CTX_free(ctx);
-        throw std::runtime_error("seal: failed to finalize encryption. " + OPENSSLError());
+        EVP_MD_CTX_destroy(mdctx);
+        throw std::runtime_error("sign: failed to get signature length. " + OPENSSLError());
     }
-    EVP_CIPHER_CTX_free(ctx);
-
-    res.data.resize(size1 + size2);
+    if (len == 0)
+    {
+        EVP_MD_CTX_destroy(mdctx);
+        throw std::runtime_error("sign: invalid signature length. " + std::to_string(len));
+    }
+    std::vector<unsigned char> res(len);
+    if (EVP_DigestSignFinal(mdctx, res.data(), &len) == 0)
+    {
+        EVP_MD_CTX_destroy(mdctx);
+        throw std::runtime_error("sign: failed to get signature length. " + OPENSSLError());
+    }
+    EVP_MD_CTX_destroy(mdctx);
     return res;
 }
 
-std::vector<unsigned char> unseal(ENGINE* engine, EVP_PKEY* pk, const Seal& data)
+void verify(ENGINE* engine, const EVP_MD* md, EVP_PKEY* pub, const std::vector<unsigned char>& signature, const void* data, size_t size)
 {
-    auto* ctx = EVP_CIPHER_CTX_new();
-    if (ctx == nullptr)
-        throw std::runtime_error("unseal: failed to create cipher context. " + OPENSSLError());
-
-    auto* cipher = EVP_aes_256_cbc();
-
-    std::vector<unsigned char> ek(data.ekl);
-    std::vector<unsigned char> iv(data.iv);
-    unsigned char* ivPtr = iv.size() == 0 ? nullptr : iv.data();
-    if (EVP_OpenInit(ctx, EVP_aes_256_cbc(), ek.data(), data.ekl, ivPtr, pk) == 0)
+    auto* mdctx = EVP_MD_CTX_create();
+    if (mdctx == nullptr)
+        throw std::runtime_error("verify: failed to create digest context. " + OPENSSLError());
+    if (EVP_DigestVerifyInit(mdctx, nullptr, md, engine, pub) == 0)
     {
-        EVP_CIPHER_CTX_free(ctx);
-        throw std::runtime_error("unseal: failed to initialize encryption. " + OPENSSLError());
+        EVP_MD_CTX_destroy(mdctx);
+        throw std::runtime_error("verify: failed to initialize verification. " + OPENSSLError());
     }
-
-    std::vector<unsigned char> res(EVP_PKEY_size(pk));
-    unsigned char* ptr = res.data();
-    int size1 = 0;
-    if (EVP_OpenUpdate(ctx, ptr, &size1, data.data.data(), data.data.size()) == 0)
+    if (EVP_DigestVerifyUpdate(mdctx, data, size) == 0)
     {
-        EVP_CIPHER_CTX_free(ctx);
-        throw std::runtime_error("unseal: failed to encrypt data. " + OPENSSLError());
+        EVP_MD_CTX_destroy(mdctx);
+        throw std::runtime_error("verify: failed to update verification. " + OPENSSLError());
     }
-
-    int size2 = 0;
-    if (EVP_OpenFinal(ctx, ptr + size1, &size2) == 0)
+    if (EVP_DigestVerifyFinal(mdctx, signature.data(), signature.size()) != 1)
     {
-        EVP_CIPHER_CTX_free(ctx);
-        throw std::runtime_error("unseal: failed to finalize encryption. " + OPENSSLError());
+        EVP_MD_CTX_destroy(mdctx);
+        throw std::runtime_error("verify: signature verification failed. " + OPENSSLError());
     }
-    EVP_CIPHER_CTX_free(ctx);
-
-    res.resize(size1 + size2);
-    return res;
+    EVP_MD_CTX_destroy(mdctx);
 }
 
 void testHash(ENGINE* engine, const void* data, size_t size, const std::string& etalon)
@@ -352,24 +341,38 @@ void testDecrypt(ENGINE* engine, const void* data, size_t size, const std::strin
     }
 }
 
-void testSeal(ENGINE* engine, EVP_PKEY* pub, EVP_PKEY* pk, const void* data, size_t size)
+void testSignVerify(ENGINE* engine, EVP_PKEY* pub, EVP_PKEY* priv, const void* data, size_t size)
 {
-    auto cipher = seal(engine, pub, data, size);
-    auto plain = unseal(engine, pk, cipher);
-    try
+    auto* md = ENGINE_get_digest(engine, NID_dstu34311);
+    if (md == nullptr)
+        throw std::runtime_error("testSignVerify: failed to get digest. " + OPENSSLError());
+    verify(engine, md, pub, sign(engine, md, priv, data, size), data, size);
+}
+
+void testVerify(ENGINE* engine, EVP_PKEY* pub, const std::string& signature, const void* data, size_t size)
+{
+    auto* md = ENGINE_get_digest(engine, NID_dstu34311);
+    if (md == nullptr)
+        throw std::runtime_error("testVerify: failed to get digest. " + OPENSSLError());
+    verify(engine, md, pub, makeBlock(signature), data, size);
+}
+
+void testVerifyCMS(ENGINE* engine, const std::string& file)
+{
+    ENGINE_set_default(engine, ENGINE_METHOD_ALL);
+    auto* fp = fopen(file.c_str(), "r");
+    if (fp == nullptr)
+        throw std::runtime_error("testVerifyCMS: failed to open file '" + file + "'. " + strerror(errno));
+    auto* cms = PEM_read_CMS(fp, nullptr, nullptr, nullptr);
+    fclose(fp);
+    if (cms == nullptr)
+        throw std::runtime_error("testVerifyCMS: failed to read CMS from file '" + file + "'. " + OPENSSLError());
+    if (CMS_verify(cms, nullptr, nullptr, nullptr, nullptr, CMS_NO_SIGNER_CERT_VERIFY) != 1)
     {
-        checkBlock(plain.data(), plain.size(), data, size);
-        std::cout << " * seal - success.\n";
+        CMS_ContentInfo_free(cms);
+        throw std::runtime_error("testVerifyCMS: CMS verification failed. " + OPENSSLError());
     }
-    catch (const std::runtime_error& /*error*/)
-    {
-        std::cout << " * seal - failure.\n";
-        std::cout << "   Unsealed: ";
-        printBlock(plain.data(), plain.size());
-        std::cout << "   Expected: ";
-        printBlock(data, size);
-        throw;
-    }
+    CMS_ContentInfo_free(cms);
 }
 
 void testHash(ENGINE* engine)
@@ -400,8 +403,11 @@ void testPKey(ENGINE* engine)
     auto pub2 = readPubKey("public2.pem");
     auto pk2 = readPrivateKey("private2.pem", "123456");
     std::cout << "*** Testing DSTU 4145 PKI ***\n";
-    testSeal(engine, pub1, pk1, "123456", 6);
-    testSeal(engine, pub2, pk2, "123456", 6);
+    testSignVerify(engine, pub1, pk1, "123456", 6);
+    testSignVerify(engine, pub2, pk2, "123456", 6);
+    testVerify(engine, pub1, "04 40 6d 81 5a 1b 1d 5e 82 93 b7 ca aa 6f 77 38 aa ef 85 3f a9 a1 10 cf 11 29 44 ee 28 cb 0d 8c f5 69 30 10 2e e5 b7 bf 04 d7 ec e1 1a f0 0b 5a e2 4f ce d4 b3 e8 5e 22 07 2a ab de 91 ae 50 23 92 00", "123456", 6);
+    testVerify(engine, pub2, "04 6c d8 45 c0 45 96 a4 71 1f d9 e8 34 d7 02 22 58 88 58 e5 19 68 66 8c a2 af c7 12 d6 77 88 fc fb 39 73 c9 28 ec 1f 78 c2 d0 ac 55 c0 63 df 14 7d d1 40 b2 db 0d 95 1a 31 93 ec 53 b7 3b 9a cc 88 3d 41 9d f4 d3 65 c2 81 2f 94 2b 1a 1c 2d a9 da 11 bc 22 99 38 25 a5 14 d6 57 37 00 93 05 dc bf c2 f0 1f 02 d0 ad 8e c9 c9 8f 19 cf 2d", "123456", 6);
+    testVerifyCMS(engine, "cms.pem");
 }
 
 }
