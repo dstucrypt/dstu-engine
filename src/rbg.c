@@ -17,7 +17,7 @@ static u4 I[2];
 static u4 s[2];
 static gost_ctx cryptor;
 static int initialized = 0;
-static CRYPTO_RWLOCK *rand_lock = NULL;
+static CRYPTO_RWLOCK *dstu_rand_lock = NULL;
 static CRYPTO_ONCE rand_lock_init = CRYPTO_ONCE_STATIC_INIT;
 
 /* DSTU RGB needs at least 40 bytes of seed to work properly */
@@ -25,7 +25,19 @@ static CRYPTO_ONCE rand_lock_init = CRYPTO_ONCE_STATIC_INIT;
 
 static void do_rand_lock_init(void)
 {
-    rand_lock = CRYPTO_THREAD_lock_new();
+    dstu_rand_lock = CRYPTO_THREAD_lock_new();
+}
+
+static int dstu_lock()
+{
+    if (!CRYPTO_THREAD_run_once(&rand_lock_init, do_rand_lock_init) || dstu_rand_lock == NULL)
+        return 0;
+    return CRYPTO_THREAD_write_lock(dstu_rand_lock);
+}
+
+static int dstu_unlock()
+{
+    return CRYPTO_THREAD_unlock(dstu_rand_lock);
 }
 
 /* We will reuse OPENSSL's default seeding logic and entropy collecting and will use its default RNG as a seeder */
@@ -54,7 +66,8 @@ static int dstu_rbg_init(void)
     unpack_sbox(default_sbox, &sbox);
 
     gost_init(&cryptor, &sbox);
-    gost_key(&cryptor, seed);
+    // Use gost_key_nomask because we don't want to query out RBG here.
+    gost_key_nomask(&cryptor, seed);
     memcpy(s, seed + 32, 8);
     gostcrypt(&cryptor, curr, (byte*) I);
     initialized = 1;
@@ -79,13 +92,9 @@ static byte dstu_rbg_get_bit(void)
     return (byte) (x[0] & 1);
 }
 
-static int dstu_rbg_status(void)
+static int dstu_rbg_status_nolock(void)
 {
     int status = RAND_OpenSSL()->status();
-
-    CRYPTO_THREAD_run_once(&rand_lock_init, do_rand_lock_init);
-
-    CRYPTO_THREAD_write_lock(rand_lock);
 
     if (status && !initialized)
     {
@@ -98,7 +107,16 @@ static int dstu_rbg_status(void)
             status = 0;
     }
 
-    CRYPTO_THREAD_unlock(rand_lock);
+    return status;
+}
+
+static int dstu_rbg_status(void)
+{
+    dstu_lock();
+
+    int status = dstu_rbg_status_nolock();
+
+    dstu_unlock();
 
     return status;
 }
@@ -109,13 +127,11 @@ static int dstu_rbg_bytes(unsigned char *buf, int num)
     byte j;
     int rv = 1;
 
-    CRYPTO_THREAD_run_once(&rand_lock_init, do_rand_lock_init);
-
-    CRYPTO_THREAD_write_lock(rand_lock);
+    dstu_lock();
 
     if (!initialized)
     {
-        if (!dstu_rbg_status())
+        if (!dstu_rbg_status_nolock())
             rv = 0;
     }
 
@@ -128,23 +144,22 @@ static int dstu_rbg_bytes(unsigned char *buf, int num)
         }
     }
 
-    CRYPTO_THREAD_unlock(rand_lock);
+    dstu_unlock();
 
     return rv;
 }
 
 static void dstu_rbg_cleanup(void)
 {
-    CRYPTO_THREAD_run_once(&rand_lock_init, do_rand_lock_init);
-    CRYPTO_THREAD_write_lock(rand_lock);
+    dstu_lock();
 
     OPENSSL_cleanse(I, sizeof(I));
     OPENSSL_cleanse(s, sizeof(s));
     OPENSSL_cleanse(&cryptor, sizeof(gost_ctx));
     initialized = 0;
 
-    CRYPTO_THREAD_unlock(rand_lock);
-    CRYPTO_THREAD_lock_free(rand_lock);
+    dstu_unlock();
+    CRYPTO_THREAD_lock_free(dstu_rand_lock);
 }
 
 RAND_METHOD dstu_rand_meth =
