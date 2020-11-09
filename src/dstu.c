@@ -91,12 +91,12 @@ static int dstu_engine_finish(ENGINE *e)
 {
     int i;
     printf("DSTU engine finalization.\n");
-    for (i = 0; i < sizeof(dstu_asn1_methods) / sizeof(EVP_PKEY_ASN1_METHOD*); ++i)
+    /*for (i = 0; i < sizeof(dstu_asn1_methods) / sizeof(EVP_PKEY_ASN1_METHOD*); ++i)
         if (dstu_asn1_methods[i] != NULL)
             dstu_asn1_meth_free(dstu_asn1_methods[i]);
     for (i = 0; i < sizeof(dstu_pkey_methods) / sizeof(EVP_PKEY_METHOD*); ++i)
         if (dstu_pkey_methods[i] != NULL)
-            dstu_pkey_meth_free(dstu_pkey_methods[i]);
+            dstu_pkey_meth_free(dstu_pkey_methods[i]);*/
     dstu_cipher_free(dstu_cipher);
     dstu_digest_free(dstu_md);
 
