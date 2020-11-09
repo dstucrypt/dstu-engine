@@ -259,7 +259,7 @@ static int dstu_pkey_sign(EVP_PKEY_CTX *ctx, unsigned char *sig, size_t *siglen,
     field_size = BN_num_bytes(n);
     encoded_sig_size = EVP_PKEY_size(pkey);
 
-    if (encoded_sig_size > *siglen)
+    if (sig && encoded_sig_size > *siglen)
     {
         *siglen = encoded_sig_size;
         goto err;
