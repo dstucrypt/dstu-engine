@@ -1,3 +1,5 @@
+![Build/Test](https://github.com/madf/dstu-engine/workflows/CMake/badge.svg)
+
 # DSTU OpenSSL engine
 
 A dynamically loadable OpenSSL engine that implements DSTU random bit generator, hash, symmetric cipher and digital signature algorithms.
