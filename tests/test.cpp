@@ -1,6 +1,7 @@
 #include <openssl/evp.h>
 #include <openssl/pem.h>
 #include <openssl/cms.h>
+#include <openssl/bio.h>
 #include <openssl/engine.h>
 #include <openssl/err.h>
 #include <openssl/conf.h>
@@ -360,14 +361,16 @@ void testVerify(ENGINE* engine, EVP_PKEY* pub, const std::string& signature, con
 void testVerifyCMS(ENGINE* engine, const std::string& file)
 {
     ENGINE_set_default(engine, ENGINE_METHOD_ALL);
+    auto* cms = CMS_ContentInfo_new_ex(nullptr, nullptr);
+    if (cms == nullptr)
+        throw std::runtime_error("testVerifyCMS: failed to read CMS from file '" + file + "'. " + OPENSSLError());
     auto* fp = fopen(file.c_str(), "r");
     if (fp == nullptr)
         throw std::runtime_error("testVerifyCMS: failed to open file '" + file + "'. " + strerror(errno));
-    auto* cms = PEM_read_CMS(fp, nullptr, nullptr, nullptr);
-    fclose(fp);
-    if (cms == nullptr)
+    auto* ci = PEM_read_CMS(fp, &cms, nullptr, nullptr);
+    if (ci == nullptr)
         throw std::runtime_error("testVerifyCMS: failed to read CMS from file '" + file + "'. " + OPENSSLError());
-    if (CMS_verify(cms, nullptr, nullptr, nullptr, nullptr, CMS_NO_SIGNER_CERT_VERIFY) != 1)
+    if (CMS_verify(ci, nullptr, nullptr, nullptr, nullptr, CMS_NO_SIGNER_CERT_VERIFY) != 1)
     {
         CMS_ContentInfo_free(cms);
         throw std::runtime_error("testVerifyCMS: CMS verification failed. " + OPENSSLError());
@@ -408,6 +411,10 @@ void testPKey(ENGINE* engine)
     testVerify(engine, pub1, "04 40 6d 81 5a 1b 1d 5e 82 93 b7 ca aa 6f 77 38 aa ef 85 3f a9 a1 10 cf 11 29 44 ee 28 cb 0d 8c f5 69 30 10 2e e5 b7 bf 04 d7 ec e1 1a f0 0b 5a e2 4f ce d4 b3 e8 5e 22 07 2a ab de 91 ae 50 23 92 00", "123456", 6);
     testVerify(engine, pub2, "04 6c d8 45 c0 45 96 a4 71 1f d9 e8 34 d7 02 22 58 88 58 e5 19 68 66 8c a2 af c7 12 d6 77 88 fc fb 39 73 c9 28 ec 1f 78 c2 d0 ac 55 c0 63 df 14 7d d1 40 b2 db 0d 95 1a 31 93 ec 53 b7 3b 9a cc 88 3d 41 9d f4 d3 65 c2 81 2f 94 2b 1a 1c 2d a9 da 11 bc 22 99 38 25 a5 14 d6 57 37 00 93 05 dc bf c2 f0 1f 02 d0 ad 8e c9 c9 8f 19 cf 2d", "123456", 6);
     testVerifyCMS(engine, "cms.pem");
+    EVP_PKEY_free(pub1);
+    EVP_PKEY_free(pk1);
+    EVP_PKEY_free(pub2);
+    EVP_PKEY_free(pk2);
 }
 
 }
