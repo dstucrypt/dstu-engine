@@ -361,7 +361,7 @@ void testVerify(ENGINE* engine, EVP_PKEY* pub, const std::string& signature, con
 void testVerifyCMS(ENGINE* engine, const std::string& file)
 {
     ENGINE_set_default(engine, ENGINE_METHOD_ALL);
-    auto* cms = CMS_ContentInfo_new_ex(nullptr, nullptr);
+    auto* cms = CMS_ContentInfo_new();
     if (cms == nullptr)
         throw std::runtime_error("testVerifyCMS: failed to read CMS from file '" + file + "'. " + OPENSSLError());
     auto* fp = fopen(file.c_str(), "r");
