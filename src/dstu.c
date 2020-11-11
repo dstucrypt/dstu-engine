@@ -91,12 +91,6 @@ static int dstu_engine_finish(ENGINE *e)
 {
     int i;
     printf("DSTU engine finalization.\n");
-    /*for (i = 0; i < sizeof(dstu_asn1_methods) / sizeof(EVP_PKEY_ASN1_METHOD*); ++i)
-        if (dstu_asn1_methods[i] != NULL)
-            dstu_asn1_meth_free(dstu_asn1_methods[i]);
-    for (i = 0; i < sizeof(dstu_pkey_methods) / sizeof(EVP_PKEY_METHOD*); ++i)
-        if (dstu_pkey_methods[i] != NULL)
-            dstu_pkey_meth_free(dstu_pkey_methods[i]);*/
     dstu_cipher_free(dstu_cipher);
     dstu_digest_free(dstu_md);
 
@@ -186,102 +180,23 @@ static int dstu_bind(ENGINE *e, const char *id)
     if (id && strcmp(id, engine_dstu_id))
         return 0;
 
-    if (!ENGINE_set_id(e, engine_dstu_id))
-    {
-        DSTUerr(DSTU_F_BIND_DSTU, ERR_R_ENGINE_LIB);
-        return 0;
-    }
-    if (!ENGINE_set_name(e, engine_dstu_name))
-    {
-        DSTUerr(DSTU_F_BIND_DSTU, ERR_R_ENGINE_LIB);
-        return 0;
-    }
-
-    if (!ENGINE_set_init_function(e, dstu_engine_init))
-    {
-        DSTUerr(DSTU_F_BIND_DSTU, ERR_R_ENGINE_LIB);
-        return 0;
-    }
-    if (!ENGINE_set_finish_function(e, dstu_engine_finish))
-    {
-        DSTUerr(DSTU_F_BIND_DSTU, ERR_R_ENGINE_LIB);
-        return 0;
-    }
-
-    if (!ENGINE_set_digests(e, dstu_digests))
-    {
-        DSTUerr(DSTU_F_BIND_DSTU, ERR_R_ENGINE_LIB);
-        return 0;
-    }
-
-    if (!ENGINE_set_ciphers(e, dstu_ciphers))
-    {
-        DSTUerr(DSTU_F_BIND_DSTU, ERR_R_ENGINE_LIB);
-        return 0;
-    }
-
-    if (!ENGINE_set_RAND(e, &dstu_rand_meth))
-    {
-        DSTUerr(DSTU_F_BIND_DSTU, ERR_R_ENGINE_LIB);
-        return 0;
-    }
-
-    if (!ENGINE_set_pkey_meths(e, dstu_pkey_meths))
-    {
-        DSTUerr(DSTU_F_BIND_DSTU, ERR_R_ENGINE_LIB);
-        return 0;
-    }
-
-    if (!ENGINE_set_pkey_asn1_meths(e, dstu_asn1_meths))
-    {
-        DSTUerr(DSTU_F_BIND_DSTU, ERR_R_ENGINE_LIB);
-        return 0;
-    }
-
-    if (!ENGINE_set_flags(e, DSTU_ENGINE_FLAGS))
-    {
-        DSTUerr(DSTU_F_BIND_DSTU, ERR_R_ENGINE_LIB);
-        return 0;
-    }
-
-    if (!ENGINE_register_digests(e))
-    {
-        DSTUerr(DSTU_F_BIND_DSTU, ERR_R_ENGINE_LIB);
-        return 0;
-    }
-
-    if (!ENGINE_register_ciphers(e))
-    {
-        DSTUerr(DSTU_F_BIND_DSTU, ERR_R_ENGINE_LIB);
-        return 0;
-    }
-
-    if (!ENGINE_register_pkey_meths(e))
-    {
-        DSTUerr(DSTU_F_BIND_DSTU, ERR_R_ENGINE_LIB);
-        return 0;
-    }
-
-    if (!ENGINE_register_pkey_asn1_meths(e))
-    {
-        DSTUerr(DSTU_F_BIND_DSTU, ERR_R_ENGINE_LIB);
-        return 0;
-    }
-
-    if (!EVP_add_digest(dstu_md_get()))
-    {
-        DSTUerr(DSTU_F_BIND_DSTU, ERR_R_EVP_LIB);
-        return 0;
-    }
-
-    if (!EVP_add_cipher(dstu_cipher_get()))
-    {
-        DSTUerr(DSTU_F_BIND_DSTU, ERR_R_EVP_LIB);
-        return 0;
-    }
-
-    /* Adding our algorithms to support PBKDF2 */
-    if (!EVP_PBE_alg_add_type(EVP_PBE_TYPE_PRF, NID_hmacWithDstu34311, -1, NID_dstu34311, NULL))
+    if (!ENGINE_set_id(e, engine_dstu_id) ||
+        !ENGINE_set_name(e, engine_dstu_name) ||
+        !ENGINE_set_init_function(e, dstu_engine_init) ||
+        !ENGINE_set_finish_function(e, dstu_engine_finish) ||
+        !ENGINE_set_digests(e, dstu_digests) ||
+        !ENGINE_set_ciphers(e, dstu_ciphers) ||
+        !ENGINE_set_RAND(e, &dstu_rand_meth) ||
+        !ENGINE_set_pkey_meths(e, dstu_pkey_meths) ||
+        !ENGINE_set_pkey_asn1_meths(e, dstu_asn1_meths) ||
+        !ENGINE_set_flags(e, DSTU_ENGINE_FLAGS) ||
+        !ENGINE_register_digests(e) ||
+        !ENGINE_register_ciphers(e) ||
+        !ENGINE_register_pkey_meths(e) ||
+        !ENGINE_register_pkey_asn1_meths(e) ||
+        !EVP_add_digest(dstu_md_get()) ||
+        !EVP_add_cipher(dstu_cipher_get()) ||
+        !EVP_PBE_alg_add_type(EVP_PBE_TYPE_PRF, NID_hmacWithDstu34311, -1, NID_dstu34311, NULL)) /* Adding our algorithms to support PBKDF2 */
     {
         DSTUerr(DSTU_F_BIND_DSTU, ERR_R_EVP_LIB);
         return 0;
