@@ -6,6 +6,10 @@ add_executable(test_engine test.cpp)
 target_link_libraries(test_engine PUBLIC coverage_config OpenSSL::Crypto)
 add_test(test_engine test_engine)
 
+add_executable(test_dstu dstu.cpp)
+target_link_libraries(test_dstu PUBLIC coverage_config OpenSSL::Crypto)
+add_test(test_dstu test_dstu)
+
 set_source_files_properties(openssl.cnf PROPERTIES GENERATED TRUE)
 configure_file(openssl.cnf.in openssl.cnf ESCAPE_QUOTES @ONLY)
 configure_file(private1.pem private1.pem COPYONLY)
