@@ -54,7 +54,6 @@ jobs:
         lcov --list coverage.info # debug info
 
     - name: Codecov
-      working-directory: ${{runner.workspace}}/build
       uses: codecov/codecov-action@v1.0.14
       with:
-        file: ./coverage.info
+        file: ${{runner.workspace}}/build/coverage.info
