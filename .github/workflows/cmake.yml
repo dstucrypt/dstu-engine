@@ -48,9 +48,10 @@ jobs:
     - name: Generate coverage report
       working-directory: ${{runner.workspace}}/build
       shell: bash
-      run: lcov --capture --directory . --output-file coverage.info
-      run: lcov --remove coverage.info '/usr/*' --output-file coverage.info # filter system-files
-      run: lcov --list coverage.info # debug info
+      run: |
+        lcov --capture --directory . --output-file coverage.info
+        lcov --remove coverage.info '/usr/*' --output-file coverage.info # filter system-files
+        lcov --list coverage.info # debug info
 
     - name: Codecov
       working-directory: ${{runner.workspace}}/build
