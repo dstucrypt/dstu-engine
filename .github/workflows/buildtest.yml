@@ -54,6 +54,7 @@ jobs:
       run: |
         lcov --capture --directory . --output-file coverage.info
         lcov --remove coverage.info '/usr/*' --output-file coverage.info # filter system-files
+        lcov --remove coverage.info '**/tests/**' --output-file coverage.info # filter tests
         lcov --list coverage.info # debug info
 
     - name: Codecov
