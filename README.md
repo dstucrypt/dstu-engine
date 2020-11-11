@@ -1,4 +1,5 @@
 ![Build/Test](https://github.com/madf/dstu-engine/workflows/CMake/badge.svg)
+[![codecov](https://codecov.io/gh/madf/dstu-engine/branch/main/graph/badge.svg)](https://codecov.io/gh/madf/dstu-engine)
 
 # DSTU OpenSSL engine
 
