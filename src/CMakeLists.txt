@@ -10,9 +10,26 @@ if ("${OPENSSL_ENGINES_DIR}" STREQUAL "")
     endif()
 endif()
 
+add_library(coverage_config INTERFACE)
+if(ENABLE_CODECOV AND CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+    # Add required flags (GCC & LLVM/Clang)
+    target_compile_options(coverage_config INTERFACE
+        -O0        # no optimization
+        -g         # generate debug info
+        --coverage # sets all required flags
+    )
+    if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.13)
+        target_link_options(coverage_config INTERFACE --coverage)
+    else()
+        target_link_libraries(coverage_config INTERFACE --coverage)
+    endif()
+else(ENABLE_CODECOV AND CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+    message(FATAL_ERROR "Unknown compiler id: ${CMAKE_C_COMPILER_ID}")
+endif(ENABLE_CODECOV AND CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+
 add_library(dstu MODULE dstu.c md.c cipher.c rbg.c pmeth.c ameth.c sign.c key.c compress.c asn1.c params.c err.c)
 set_target_properties(dstu PROPERTIES PREFIX "")
-target_link_libraries(dstu OpenSSL::Crypto)
+target_link_libraries(dstu PUBLIC coverage_config OpenSSL::Crypto)
 
 add_subdirectory(gost)
 
