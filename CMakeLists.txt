@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.13)
 project(dstu-engine LANGUAGES C VERSION 0.0.1)
 
 option(BUILD_TESTS "Build tests." OFF)
+option(ENABLE_CODECOV "Enable code coverage analysis." OFF)
 
 add_subdirectory(src)
 
