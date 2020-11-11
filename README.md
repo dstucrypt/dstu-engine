@@ -31,10 +31,9 @@ sudo make install
 Specify `-engine dstu`:
 ```
 $ openssl cms -verify -engine dstu -in tests/cms.pem -inform PEM -noverify
-DSTU engine initialization.
 engine "dstu" set.
 Verification successful
-<?xmlversion="1.0" encoding="windows-1251"?><RQ V="1"><DAT FN="4538765845" TN="345612052809" ZN="" DI="238" V="1"><C T="11"></C><TS>YYYYMMDDHHMMSS</TS></DAT><MAC></MAC></RQ>DSTU engine finalization.
+<?xmlversion="1.0" encoding="windows-1251"?><RQ V="1"><DAT FN="4538765845" TN="345612052809" ZN="" DI="238" V="1"><C T="11"></C><TS>YYYYMMDDHHMMSS</TS></DAT><MAC></MAC></RQ>
 ```
 #### With API
 Load 'dstu' engine with `ENGINE_by_id` and pass it to API functions:

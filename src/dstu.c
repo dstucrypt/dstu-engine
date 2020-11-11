@@ -83,14 +83,12 @@ static EVP_PKEY_ASN1_METHOD *dstu_asn1_meth_get(int nid)
 
 static int dstu_engine_init(ENGINE *e)
 {
-    printf("DSTU engine initialization.\n");
     return 1;
 }
 
 static int dstu_engine_finish(ENGINE *e)
 {
     int i;
-    printf("DSTU engine finalization.\n");
     dstu_cipher_free(dstu_cipher);
     dstu_digest_free(dstu_md);
 
