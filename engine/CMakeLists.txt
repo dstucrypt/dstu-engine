@@ -29,11 +29,9 @@ else(ENABLE_CODECOV AND CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
     endif(ENABLE_CODECOV)
 endif(ENABLE_CODECOV AND CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
 
-add_library(dstu MODULE dstu.c md.c cipher.c rbg.c pmeth.c ameth.c sign.c key.c compress.c asn1.c params.c err.c)
+add_library(dstu MODULE dstu.c md.c cipher.c rbg.c pmeth.c ameth.c sign.c key.c compress.c asn1.c err.c)
 set_target_properties(dstu PROPERTIES PREFIX "")
-target_link_libraries(dstu PUBLIC coverage_config OpenSSL::Crypto)
-
-add_subdirectory(gost)
+target_link_libraries(dstu PUBLIC dstulib coverage_config OpenSSL::Crypto)
 
 install(TARGETS dstu
         LIBRARY DESTINATION ${OPENSSL_ENGINES_DIR})
