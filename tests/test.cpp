@@ -368,6 +368,7 @@ void testVerifyCMS(ENGINE* engine, const std::string& file)
     if (fp == nullptr)
         throw std::runtime_error("testVerifyCMS: failed to open file '" + file + "'. " + strerror(errno));
     auto* ci = PEM_read_CMS(fp, &cms, nullptr, nullptr);
+    fclose(fp);
     if (ci == nullptr)
         throw std::runtime_error("testVerifyCMS: failed to read CMS from file '" + file + "'. " + OPENSSLError());
     if (CMS_verify(ci, nullptr, nullptr, nullptr, nullptr, CMS_NO_SIGNER_CERT_VERIFY) != 1)

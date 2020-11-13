@@ -33,6 +33,8 @@ void testKey6(const std::string& file, const std::string& password)
         throw std::runtime_error("testKey6: failed to read key from '" + file + "'.");
     if (keys == nullptr || numKeys == 0)
         throw std::runtime_error("testKey6: no keys from '" + file + "'.");
+    if (numKeys != 2)
+        throw std::runtime_error("testKey6: '" + file + "' contains two kays, one got.");
     for (size_t i = 0; i < numKeys; ++i)
         EVP_PKEY_free(keys[i]);
     OPENSSL_free(keys);

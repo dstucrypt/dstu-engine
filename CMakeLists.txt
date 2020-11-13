@@ -13,4 +13,4 @@ if(BUILD_TESTS)
     add_subdirectory(tests)
 endif(BUILD_TESTS)
 
-add_custom_target(cppcheck COMMAND cppcheck --enable=all ${CMAKE_SOURCE_DIR}/engine ${CMAKE_SOURCE_DIR}/keylib)
+add_custom_target(cppcheck COMMAND cppcheck --enable=all ${CMAKE_SOURCE_DIR}/engine ${CMAKE_SOURCE_DIR}/keylib ${CMAKE_SOURCE_DIR}/dstulib)
