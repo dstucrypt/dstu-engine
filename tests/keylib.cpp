@@ -27,10 +27,15 @@ void testKey6(const std::string& file, const std::string& password)
     auto* fp = fopen(file.c_str(), "r");
     if (fp == nullptr)
         throw std::runtime_error("testKey6: failed to open '" + file + "'. " + strerror(errno));
-    EVP_PKEY* keys = nullptr;
+    EVP_PKEY** keys = nullptr;
     size_t numKeys = 0;
     if (readKey6(fp, password.c_str(), password.length(), &keys, &numKeys) == 0)
         throw std::runtime_error("testKey6: failed to read key from '" + file + "'.");
+    if (keys == nullptr || numKeys == 0)
+        throw std::runtime_error("testKey6: no keys from '" + file + "'.");
+    for (size_t i = 0; i < numKeys; ++i)
+        EVP_PKEY_free(keys[i]);
+    OPENSSL_free(keys);
     fclose(fp);
 }
 

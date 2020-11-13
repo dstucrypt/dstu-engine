@@ -32,15 +32,23 @@ static void pkdf(const char* password, size_t passSize, unsigned char* key)
         hash(key, 32, key);
 }
 
-static int decryptKey6(const void* data, size_t size, const void* pad, size_t padSize, const char* password, size_t passSize, EVP_PKEY** keys, size_t* numKeys)
+static EVP_PKEY* pkeyFromAttributes(const void* data, size_t size)
+{
+    return NULL;
+}
+
+static int decryptKey6(const void* data, size_t size, const void* pad, size_t padSize, const char* password, size_t passSize, EVP_PKEY*** keys, size_t* numKeys)
 {
     gost_ctx ctx;
     gost_subst_block sbox;
     unsigned char key[32];
-    unsigned char* source = OPENSSL_malloc(size + padSize);
-    unsigned char* res = OPENSSL_malloc(size + padSize + 8);
+    const size_t sourceSize = size + padSize;
+    const size_t resSize = sourceSize + 8;
+    unsigned char* source = OPENSSL_malloc(sourceSize);
+    unsigned char* res = OPENSSL_malloc(resSize);
     const unsigned char* ptr = res;
-    EVP_PKEY* pkey = NULL;
+    EVP_PKEY* pkey1 = NULL;
+    EVP_PKEY* pkey2 = NULL;
 
     unpack_sbox(default_sbox, &sbox);
     gost_init(&ctx, &sbox);
@@ -49,21 +57,37 @@ static int decryptKey6(const void* data, size_t size, const void* pad, size_t pa
     memcpy(source, data, size);
     if (padSize > 0)
         memcpy(source + size, pad, padSize);
-    gost_dec(&ctx, source, res, (size + padSize) / 8);
-    pkey = d2i_AutoPrivateKey(NULL, &ptr, size + padSize + 8);
-    if (pkey == NULL)
+    gost_dec(&ctx, source, res, sourceSize / 8);
+    OPENSSL_clear_free(source, sourceSize);
+
+    pkey1 = d2i_AutoPrivateKey(NULL, &ptr, resSize);
+    if (pkey1 == NULL)
     {
-        OPENSSL_clear_free(res, size + padSize + 8);
-        OPENSSL_clear_free(source, size + padSize);
+        OPENSSL_clear_free(res, resSize);
         return 0;
     }
-    EVP_PKEY_free(pkey);
-    OPENSSL_clear_free(res, size + padSize + 8);
-    OPENSSL_clear_free(source, size + padSize);
+
+    pkey2 = pkeyFromAttributes(res, resSize);
+    OPENSSL_clear_free(res, resSize);
+
+    if (pkey2 == NULL)
+    {
+        *keys = OPENSSL_malloc(sizeof(EVP_PKEY*));
+        (*keys)[0] = pkey1;
+        *numKeys = 1;
+    }
+    else
+    {
+        *keys = OPENSSL_malloc(sizeof(EVP_PKEY*) * 2);
+        (*keys)[0] = pkey1;
+        (*keys)[1] = pkey2;
+        *numKeys = 2;
+    }
+
     return 1;
 }
 
-int parseKey6(const void* data, size_t size, const char* password, size_t passSize, EVP_PKEY** keys, size_t* numKeys)
+int parseKey6(const void* data, size_t size, const char* password, size_t passSize, EVP_PKEY*** keys, size_t* numKeys)
 {
     int res = 0;
     ASN1_OBJECT* correctType = NULL;
@@ -101,7 +125,7 @@ int parseKey6(const void* data, size_t size, const char* password, size_t passSi
     return res;
 }
 
-int readKey6(FILE* fp, const char* password, size_t passSize, EVP_PKEY** keys, size_t* numKeys)
+int readKey6(FILE* fp, const char* password, size_t passSize, EVP_PKEY*** keys, size_t* numKeys)
 {
     int res = 0;
     BIO* bio = BIO_new_fp(fp, 0);
@@ -112,7 +136,7 @@ int readKey6(FILE* fp, const char* password, size_t passSize, EVP_PKEY** keys, s
     return res;
 }
 
-int readKey6_bio(BIO* bio, const char* password, size_t passSize, EVP_PKEY** keys, size_t* numKeys)
+int readKey6_bio(BIO* bio, const char* password, size_t passSize, EVP_PKEY*** keys, size_t* numKeys)
 {
     unsigned char buf[1024];
     BIO *mem = BIO_new(BIO_s_mem());
