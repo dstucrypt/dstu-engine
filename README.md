@@ -32,7 +32,7 @@ sudo make install
  * OpenSSL 1.1.0 or later.
 
 ## Documentation
-[Library reference](https://madf.github.io/dstu-engine/index.html)
+[Library reference](https://madf.github.io/dstu-engine/)
 
 ## Usage examples
 #### With `openssl` utility
