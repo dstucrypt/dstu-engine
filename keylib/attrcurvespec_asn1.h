@@ -13,4 +13,3 @@ typedef struct DSTU_AttrCurveSpec_st
 } DSTU_AttrCurveSpec;
 
 DECLARE_ASN1_FUNCTIONS(DSTU_AttrCurveSpec)
-DECLARE_ASN1_PRINT_FUNCTION(DSTU_AttrCurveSpec)
