@@ -71,7 +71,7 @@ static BIGNUM* getPrivateKeyNum(BN_CTX* ctx, X509_ATTRIBUTE* attr)
     for (i = 0; i < length; ++i)
     {
         // Swap bits
-        char b = data[i];
+        b = data[i];
         b = (b & 0xF0) >> 4 | (b & 0x0F) << 4;
         b = (b & 0xCC) >> 2 | (b & 0x33) << 2;
         b = (b & 0xAA) >> 1 | (b & 0x55) << 1;
@@ -169,7 +169,7 @@ static EC_GROUP* makeECGROUP(BN_CTX* ctx, X509_ATTRIBUTE* attr)
     if (count < 1)
         return NULL;
 
-    for (int i = 0; i < count; ++i)
+    for (i = 0; i < count; ++i)
     {
         spec = ASN1_TYPE_unpack_sequence(ASN1_ITEM_rptr(DSTU_AttrCurveSpec), X509_ATTRIBUTE_get0_type(attr, i));
         if (spec != NULL)
