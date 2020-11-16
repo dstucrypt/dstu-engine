@@ -212,6 +212,159 @@ DSTU_AlgorithmParameters *asn1_from_key(const DSTU_KEY *key,
     return ret;
 }
 
+EC_GROUP *group_from_asn1(const DSTU_CustomCurveSpec* spec, int is_little_endian)
+{
+    BIGNUM *p, *a, *b, *N;
+    EC_GROUP *ret = NULL;
+    EC_GROUP *group = NULL;
+    EC_POINT *g = NULL;
+    BN_CTX *ctx = NULL;
+    int poly[6];
+    unsigned char *reverse_buffer = NULL;
+
+    poly[0] = ASN1_INTEGER_get(spec->field->m);
+    if (poly[0] <= 0)
+        goto err;
+
+    if (DSTU_TRINOMIAL == spec->field->poly->type)
+    {
+        poly[1] = ASN1_INTEGER_get(spec->field->poly->poly.k);
+        if (poly[1] <= 0)
+            goto err;
+        poly[2] = 0;
+        poly[3] = -1;
+    }
+    else
+    {
+        poly[1] = ASN1_INTEGER_get(spec->field->poly->poly.pentanomial->l);
+        if (poly[1] <= 0)
+            goto err;
+
+        poly[2] = ASN1_INTEGER_get(spec->field->poly->poly.pentanomial->j);
+        if (poly[2] <= 0)
+            goto err;
+
+        poly[3] = ASN1_INTEGER_get(spec->field->poly->poly.pentanomial->k);
+        if (poly[3] <= 0)
+            goto err;
+
+        poly[4] = 0;
+        poly[5] = -1;
+    }
+
+    ctx = BN_CTX_new();
+    if (!ctx)
+        goto err;
+
+    BN_CTX_start(ctx);
+
+    p = BN_CTX_get(ctx);
+    a = BN_CTX_get(ctx);
+    b = BN_CTX_get(ctx);
+    N = BN_CTX_get(ctx);
+
+    if (!N)
+        goto err;
+
+    if (!BN_GF2m_arr2poly(poly, p))
+        goto err;
+
+    if (!ASN1_INTEGER_to_BN(spec->a, a))
+        goto err;
+
+    if (!BN_is_one(a) && !BN_is_zero(a))
+        goto err;
+
+    if (is_little_endian)
+    {
+        reverse_buffer = OPENSSL_malloc(ASN1_STRING_length(spec->b));
+        if (!reverse_buffer)
+            goto err;
+
+        reverse_bytes_copy(reverse_buffer,
+                           ASN1_STRING_get0_data(spec->b),
+                           ASN1_STRING_length(spec->b));
+
+        if (!BN_bin2bn(reverse_buffer,
+                       ASN1_STRING_length(spec->b),
+                       b))
+        {
+            OPENSSL_free(reverse_buffer);
+            goto err;
+        }
+
+        OPENSSL_free(reverse_buffer);
+    }
+    else
+    {
+        if (!BN_bin2bn(ASN1_STRING_get0_data(spec->b),
+                       ASN1_STRING_length(spec->b),
+                       b))
+            goto err;
+    }
+
+    if (!ASN1_INTEGER_to_BN(spec->n, N))
+        goto err;
+
+    group = EC_GROUP_new_curve_GF2m(p, a, b, ctx);
+    if (!group)
+        goto err;
+
+    g = EC_POINT_new(group);
+    if (!g)
+        goto err;
+
+    if (is_little_endian)
+    {
+        reverse_buffer = OPENSSL_malloc(ASN1_STRING_length(spec->bp));
+        if (!reverse_buffer)
+            goto err;
+
+        reverse_bytes_copy(reverse_buffer,
+                           ASN1_STRING_get0_data(spec->bp),
+                           ASN1_STRING_length(spec->bp));
+
+        if (!dstu_point_expand(reverse_buffer,
+                               ASN1_STRING_length(spec->bp),
+                               group, g))
+        {
+            OPENSSL_free(reverse_buffer);
+            goto err;
+        }
+
+        OPENSSL_free(reverse_buffer);
+    }
+    else
+    {
+        if (!dstu_point_expand(ASN1_STRING_get0_data(spec->bp),
+                               ASN1_STRING_length(spec->bp),
+                               group, g))
+            goto err;
+    }
+
+    if (!EC_GROUP_set_generator(group, g, N, BN_value_one()))
+        goto err;
+
+    ret = group;
+    group = NULL;
+
+    err:
+
+    if (ctx)
+    {
+        BN_CTX_end(ctx);
+        BN_CTX_free(ctx);
+    }
+
+    if (g)
+        EC_POINT_free(g);
+
+    if (group)
+        EC_GROUP_free(group);
+
+    return ret;
+}
+
 DSTU_KEY *key_from_asn1(const DSTU_AlgorithmParameters *params,
                         int is_little_endian)
 {
@@ -250,127 +403,8 @@ DSTU_KEY *key_from_asn1(const DSTU_AlgorithmParameters *params,
     }
     else
     {
-        poly[0] = ASN1_INTEGER_get(params->curve->curve.custom_curve->field->m);
-        if (poly[0] <= 0)
-            goto err;
-
-        if (DSTU_TRINOMIAL == params->curve->curve.custom_curve->field->poly->type)
-        {
-            poly[1] = ASN1_INTEGER_get(params->curve->curve.custom_curve->field->poly->poly.k);
-            if (poly[1] <= 0)
-                goto err;
-            poly[2] = 0;
-            poly[3] = -1;
-        }
-        else
-        {
-            poly[1] = ASN1_INTEGER_get(params->curve->curve.custom_curve->field->poly->poly.pentanomial->l);
-            if (poly[1] <= 0)
-                goto err;
-
-            poly[2] = ASN1_INTEGER_get(params->curve->curve.custom_curve->field->poly->poly.pentanomial->j);
-            if (poly[2] <= 0)
-                goto err;
-
-            poly[3] = ASN1_INTEGER_get(params->curve->curve.custom_curve->field->poly->poly.pentanomial->k);
-            if (poly[3] <= 0)
-                goto err;
-
-            poly[4] = 0;
-            poly[5] = -1;
-        }
-
-        ctx = BN_CTX_new();
-        if (!ctx)
-            goto err;
-
-        BN_CTX_start(ctx);
-
-        p = BN_CTX_get(ctx);
-        a = BN_CTX_get(ctx);
-        b = BN_CTX_get(ctx);
-        N = BN_CTX_get(ctx);
-
-        if (!N)
-            goto err;
-
-        if (!BN_GF2m_arr2poly(poly, p))
-            goto err;
-
-        if (!ASN1_INTEGER_to_BN(params->curve->curve.custom_curve->a, a))
-            goto err;
-
-        if (!BN_is_one(a) && !BN_is_zero(a))
-            goto err;
-
-        if (is_little_endian)
-        {
-            reverse_buffer = OPENSSL_malloc(ASN1_STRING_length(params->curve->curve.custom_curve->b));
-            if (!reverse_buffer)
-                goto err;
-
-            reverse_bytes_copy(reverse_buffer,
-                               ASN1_STRING_get0_data(params->curve->curve.custom_curve->b),
-                               ASN1_STRING_length(params->curve->curve.custom_curve->b));
-
-            if (!BN_bin2bn(reverse_buffer,
-                           ASN1_STRING_length(params->curve->curve.custom_curve->b),
-                           b))
-            {
-                OPENSSL_free(reverse_buffer);
-                goto err;
-            }
-
-            OPENSSL_free(reverse_buffer);
-        }
-        else
-        {
-            if (!BN_bin2bn(ASN1_STRING_get0_data(params->curve->curve.custom_curve->b),
-                           ASN1_STRING_length(params->curve->curve.custom_curve->b),
-                           b))
-                goto err;
-        }
-
-        if (!ASN1_INTEGER_to_BN(params->curve->curve.custom_curve->n, N))
-            goto err;
-
-        group = EC_GROUP_new_curve_GF2m(p, a, b, ctx);
+        group = group_from_asn1(params->curve->curve.custom_curve, is_little_endian);
         if (!group)
-            goto err;
-
-        g = EC_POINT_new(group);
-        if (!g)
-            goto err;
-
-        if (is_little_endian)
-        {
-            reverse_buffer = OPENSSL_malloc(ASN1_STRING_length(params->curve->curve.custom_curve->bp));
-            if (!reverse_buffer)
-                goto err;
-
-            reverse_bytes_copy(reverse_buffer,
-                               ASN1_STRING_get0_data(params->curve->curve.custom_curve->bp),
-                               ASN1_STRING_length(params->curve->curve.custom_curve->bp));
-
-            if (!dstu_point_expand(reverse_buffer,
-                                   ASN1_STRING_length(params->curve->curve.custom_curve->bp),
-                                   group, g))
-            {
-                OPENSSL_free(reverse_buffer);
-                goto err;
-            }
-
-            OPENSSL_free(reverse_buffer);
-        }
-        else
-        {
-            if (!dstu_point_expand(ASN1_STRING_get0_data(params->curve->curve.custom_curve->bp),
-                                   ASN1_STRING_length(params->curve->curve.custom_curve->bp),
-                                   group, g))
-                goto err;
-        }
-
-        if (!EC_GROUP_set_generator(group, g, N, BN_value_one()))
             goto err;
 
         if (!EC_KEY_set_group(key->ec, group))

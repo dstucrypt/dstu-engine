@@ -7,4 +7,4 @@ engines = engine_section
 dstu = dstu_section
 
 [dstu_section]
-dynamic_path = @CMAKE_BINARY_DIR@/src/dstu.so
+dynamic_path = @CMAKE_BINARY_DIR@/engine/dstu.so

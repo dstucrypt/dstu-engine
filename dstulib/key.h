@@ -26,6 +26,7 @@ typedef struct dstu_key_ctx_st
 
 DSTU_KEY *DSTU_KEY_new(void);
 void DSTU_KEY_set(DSTU_KEY *key, EC_KEY *ec, unsigned char *sbox);
+EC_GROUP *group_from_asn1(const DSTU_CustomCurveSpec* spec, int is_little_endian);
 DSTU_KEY *key_from_asn1(const DSTU_AlgorithmParameters *params,
                         int is_little_endian);
 DSTU_AlgorithmParameters *asn1_from_key(const DSTU_KEY *key,
