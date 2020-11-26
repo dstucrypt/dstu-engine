@@ -369,11 +369,9 @@ DSTU_KEY *key_from_asn1(const DSTU_AlgorithmParameters *params,
                         int is_little_endian)
 {
     DSTU_KEY *key = DSTU_KEY_new(), *ret = NULL;
-    BIGNUM *p, *a, *b, *N;
     EC_GROUP *group = NULL;
     EC_POINT *g = NULL;
     BN_CTX *ctx = NULL;
-    int poly[6];
     unsigned char *reverse_buffer = NULL;
 
     if (!key)
