@@ -211,11 +211,9 @@ static EVP_PKEY* makePKey(X509_ATTRIBUTE* curveAttr, X509_ATTRIBUTE* keyAttr)
     return res;
 }
 
-static EVP_PKEY* pkeyFromAttributes(const void* data, size_t size)
+static EVP_PKEY* pkeyFromAttributes(const PKCS8_PRIV_KEY_INFO* pkcs8)
 {
-    const unsigned char* ptr = data;
-    PKCS8_PRIV_KEY_INFO* pkcs8 = d2i_PKCS8_PRIV_KEY_INFO(NULL, &ptr, size);
-    const STACK_OF(X509_ATTRIBUTE)* attributes = NULL;
+    const STACK_OF(X509_ATTRIBUTE)* attributes = PKCS8_pkey_get0_attrs(pkcs8);
     X509_ATTRIBUTE* curveAttr = NULL;
     X509_ATTRIBUTE* keyAttr = NULL;
     X509_ATTRIBUTE* attr = NULL;
@@ -223,15 +221,9 @@ static EVP_PKEY* pkeyFromAttributes(const void* data, size_t size)
     ASN1_OBJECT* dstu4145Key = OBJ_txt2obj(dstu4145KeyOID, 1);
     ASN1_OBJECT* attrObject = NULL;
     EVP_PKEY* res = NULL;
-    int nattr = 0;
+    int nattr = sk_X509_ATTRIBUTE_num(attributes);
     int i = 0;
 
-    if (pkcs8 == NULL)
-        return NULL;
-
-    attributes = PKCS8_pkey_get0_attrs(pkcs8);
-
-    nattr = sk_X509_ATTRIBUTE_num(attributes);
     for (i = 0; i < nattr; ++i)
     {
         attr = sk_X509_ATTRIBUTE_value(attributes, i);
@@ -253,26 +245,27 @@ static EVP_PKEY* pkeyFromAttributes(const void* data, size_t size)
         return NULL;
 
     res = makePKey(curveAttr, keyAttr);
-    PKCS8_PRIV_KEY_INFO_free(pkcs8);
     return res;
 }
 
 int keysFromPKCS8(const void* data, size_t size, EVP_PKEY*** keys, size_t* numKeys)
 {
     const unsigned char* ptr = data;
-    EVP_PKEY* pkey1 = d2i_AutoPrivateKey(NULL, &ptr, size);
-    EVP_PKEY* pkey2 = pkeyFromAttributes(data, size);
+    PKCS8_PRIV_KEY_INFO* pkcs8 = d2i_PKCS8_PRIV_KEY_INFO(NULL, &ptr, size);
+    EVP_PKEY* pkey1 = NULL;
+    EVP_PKEY* pkey2 = NULL;
 
-    if (pkey1 == NULL && pkey2 == NULL)
+    if (pkcs8 == NULL)
         return 0;
 
+    pkey1 = EVP_PKCS82PKEY(pkcs8);
     if (pkey1 == NULL)
     {
-        *keys = OPENSSL_malloc(sizeof(EVP_PKEY*));
-        (*keys)[0] = pkey2;
-        *numKeys = 1;
-        return 1;
+        PKCS8_PRIV_KEY_INFO_free(pkcs8);
+        return 0;
     }
+    pkey2 = pkeyFromAttributes(pkcs8);
+    PKCS8_PRIV_KEY_INFO_free(pkcs8);
 
     if (pkey2 == NULL)
     {
