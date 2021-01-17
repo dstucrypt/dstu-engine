@@ -43,6 +43,12 @@ engine "dstu" set.
 Verification successful
 <?xmlversion="1.0" encoding="windows-1251"?><RQ V="1"><DAT FN="4538765845" TN="345612052809" ZN="" DI="238" V="1"><C T="11"></C><TS>YYYYMMDDHHMMSS</TS></DAT><MAC></MAC></RQ>
 ```
+#### With Docker
+```
+docker build -t dstu-engine .
+dockerrun -td dstu-engine
+docker exec  $(docker ps | grep dstu | cut -d' ' -f1)  openssl cms -verify -engine dstu -in dstu-engine/tests/cms.pem -inform PEM -noverify
+```
 #### With API
 Load 'dstu' engine with `ENGINE_by_id` and pass it to API functions:
 ```c++
