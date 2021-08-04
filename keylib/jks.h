@@ -107,7 +107,7 @@ size_t JKSEntryPKeyNum(const JKSEntry* entry);
  */
 const EVP_PKEY* JKSEntryPKey(const JKSEntry* entry, size_t pos);
 
-/** @fn const EVP_PKEY* JKSEntryPKey(const JKSEntry* entry, size_t pos)
+/** @fn const EVP_PKEY* JKSEntryPKeyCopy(const JKSEntry* entry, size_t pos)
  *  @brief returns a pointer to a copy of an EVP_PKEY number 'pos'.
  *  @param entry a pointer to the JKS entry;
  *  @param pos EVP_PKEY number, starting from 0.
