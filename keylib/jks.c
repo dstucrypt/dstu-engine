@@ -474,12 +474,6 @@ const EVP_PKEY* JKSEntryPKey(const JKSEntry* entry, size_t pos)
     return entry->pkeys[pos];
 }
 
-const EVP_PKEY* JKSEntryPKeyCopy(const JKSEntry* entry, size_t pos)
-{
-    EVP_PKEY_up_ref(entry->pkeys[pos]);
-    return entry->pkeys[pos];
-}
-
 size_t JKSEntryCertNum(const JKSEntry* entry)
 {
     return entry->certNum;

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.13)
-project(dstu-engine LANGUAGES C VERSION 1.2.2)
+project(dstu-engine LANGUAGES C VERSION 1.2.1)
 
 option(BUILD_TESTS "Build tests." OFF)
 option(ENABLE_CODECOV "Enable code coverage analysis." OFF)
