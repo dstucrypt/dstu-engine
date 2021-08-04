@@ -107,6 +107,15 @@ size_t JKSEntryPKeyNum(const JKSEntry* entry);
  */
 const EVP_PKEY* JKSEntryPKey(const JKSEntry* entry, size_t pos);
 
+/** @fn const EVP_PKEY* JKSEntryPKeyCopy(const JKSEntry* entry, size_t pos)
+ *  @brief returns a pointer to a copy of an EVP_PKEY number 'pos'.
+ *  @param entry a pointer to the JKS entry;
+ *  @param pos EVP_PKEY number, starting from 0.
+ *  @return the pointer to the EVP_PKEY.
+ *  @note the entry must be decrypted first. Otherwise, the function returns NULL. The pointer must be freed manually.
+ */
+const EVP_PKEY* JKSEntryPKeyCopy(const JKSEntry* entry, size_t pos);
+
 /** @fn size_t JKSEntryCertNum(const JKSEntry* entry)
  *  @brief returns a number of certificates in this entry.
  *  @param entry a pointer to the JKS entry.
