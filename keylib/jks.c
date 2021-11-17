@@ -163,6 +163,7 @@ static Cert* CertNew()
     Cert* res = OPENSSL_malloc(sizeof(Cert));
     res->type = NULL;
     res->cert = NULL;
+    return res;
 }
 
 static void CertFree(Cert* cert)
@@ -229,12 +230,11 @@ static JKS* JKSNew(size_t type, size_t entryNum)
     return res;
 }
 
-static const void* parseCert(const void* data, JKSEntry* entry, size_t num)
+static const void* parseCert(const void* data, Cert** certPtr)
 {
     uint16_t typeLength = ntohs(read16(data, 0));
     uint32_t dataLength = ntohl(read32(data, sizeof(typeLength) + typeLength));
     const unsigned char* dataPtr = ptrAt(data, sizeof(typeLength) + typeLength + sizeof(dataLength));
-    Cert* res = CertNew();
     char* type = NULL;
     X509* x509 = NULL;
 
@@ -246,13 +246,12 @@ static const void* parseCert(const void* data, JKSEntry* entry, size_t num)
     if (x509 == NULL)
     {
         OPENSSL_free(type);
-        CertFree(res);
         return NULL;
     }
 
-    res->type = type;
-    res->cert = x509;
-    entry->certs[num] = res;
+    *certPtr = CertNew();
+    (*certPtr)->type = type;
+    (*certPtr)->cert = x509;
     return ptrAt(data, sizeof(typeLength) + typeLength + sizeof(dataLength) + dataLength);
 }
 
@@ -334,7 +333,7 @@ static const void* parseKey(const void* data, JKSEntry** entry)
 
     for (i = 0; i < certNum; ++i)
     {
-        certPtr = parseCert(certPtr, *entry, i);
+        certPtr = parseCert(certPtr, &(*entry)->certs[i]);
         if (certPtr == NULL)
         {
             JKSEntryFree(*entry);
@@ -353,7 +352,7 @@ static const void* parseEntry(const void* data, JKSEntry** entry)
             return parseKey(ptrAt(data, sizeof(tag)), entry);
         case JKS_ENTRY_CERT:
             *entry = JKSEntryNew(JKS_ENTRY_CERT, 1);
-            return parseCert(ptrAt(data, sizeof(tag)), *entry, 0);
+            return parseCert(ptrAt(data, sizeof(tag)), &(*entry)->certs[0]);
     }
     return NULL;
 }
