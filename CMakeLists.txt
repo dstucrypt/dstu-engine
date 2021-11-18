@@ -22,9 +22,12 @@ performance-*,\
 portability-*,\
 readability-*,\
 bugprone-*,\
+-clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling,\
+-bugprone-easily-swappable-parameters,\
 -modernize-avoid-bind,\
 -modernize-use-trailing-return-type,\
 -readability-braces-around-statements, \
+-readability-function-cognitive-complexity,\
 -readability-magic-numbers" )
     endif ()
 endif ()
