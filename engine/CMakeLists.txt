@@ -14,5 +14,12 @@ add_library(dstu MODULE dstu.c md.c cipher.c rbg.c pmeth.c ameth.c sign.c err.c)
 set_target_properties(dstu PROPERTIES PREFIX "")
 target_link_libraries(dstu PUBLIC dstulib coverage_config OpenSSL::Crypto)
 
+if ( CLANG_TIDY_EXE )
+    set_target_properties ( dstu PROPERTIES C_CLANG_TIDY "${DO_CLANG_TIDY}" )
+endif ()
+if ( INCLUDE_WHAT_YOU_USE_EXE )
+    set_target_properties ( dstu PROPERTIES C_INCLUDE_WHAT_YOU_USE "${DO_INCLUDE_WHAT_YOU_USE}" )
+endif ()
+
 install(TARGETS dstu
         LIBRARY DESTINATION ${OPENSSL_ENGINES_DIR})
