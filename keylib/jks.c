@@ -4,8 +4,16 @@
 
 #include <iconv.h>
 
+#include <openssl/asn1.h>
+#include <openssl/bio.h>
+#include <openssl/crypto.h>
+#include <openssl/evp.h>
+#include <openssl/objects.h>
+#include <openssl/x509.h>
+
 #include <arpa/inet.h> // ntohl
 #include <string.h>
+#include <stdint.h>
 #include <errno.h>
 
 static const char pbes1OID[] = "1.3.6.1.4.1.42.2.19.1";
@@ -135,7 +143,7 @@ static int toUTF16BE(const char* source, size_t size, void** dest, size_t* dsize
 
 static int twoHash(const void* d1, size_t ds1, const void* d2, size_t ds2, void* digest)
 {
-    int ds = 0;
+    unsigned int ds = 0;
     EVP_MD_CTX* ctx = EVP_MD_CTX_new();
     int ok = EVP_DigestInit_ex(ctx, EVP_sha1(), NULL) != 0 &&
              EVP_DigestUpdate(ctx, d1, ds1) != 0 &&
@@ -147,7 +155,7 @@ static int twoHash(const void* d1, size_t ds1, const void* d2, size_t ds2, void*
 
 static int whiteHash(const void* d1, size_t ds1, const void* d2, size_t ds2, void* digest)
 {
-    int ds = 0;
+    unsigned int ds = 0;
     EVP_MD_CTX* ctx = EVP_MD_CTX_new();
     int ok = EVP_DigestInit_ex(ctx, EVP_sha1(), NULL) != 0 &&
              EVP_DigestUpdate(ctx, d1, ds1) != 0 &&
@@ -310,6 +318,12 @@ static int fromKeyProtector(const void* data, size_t size, const char* pwd16, si
 
 static int fromPBES1(const void* data, size_t size, const void* pwd16, size_t pwd16Length, EVP_PKEY*** keys, size_t* numKeys)
 {
+    (void) data; //Unused
+    (void) size; //Unused
+    (void) pwd16; //Unused
+    (void) pwd16Length; //Unused
+    (void) keys; //Unused
+    (void) numKeys; //Unused
     return 0;
 }
 
@@ -404,7 +418,6 @@ int JKSEntryDecrypt(JKSEntry* entry, const char* password, size_t passSize)
     ASN1_OBJECT* keyProtector = NULL;
     ASN1_OBJECT* pbes1 = NULL;
     const ASN1_OCTET_STRING* keyData = NULL;
-    size_t i = 0;
 
     if (entry->type != JKS_ENTRY_PRIVATE_KEY)
         return 1;
@@ -506,6 +519,9 @@ int parseJKS(const void* data, size_t size, const char* password, size_t passSiz
     JKSEntry* entry = NULL;
     void* pwd16 = NULL;
     size_t pwd16Length = 0;
+
+    (void) size; // Unused
+
     // Check MAGIC
     switch (magic)
     {
@@ -530,6 +546,11 @@ int parseJKS(const void* data, size_t size, const char* password, size_t passSiz
         if (entryPtr == NULL)
             break;
         res->entries[i] = entry;
+    }
+    if (entryPtr == NULL)
+    {
+        JKSFree(res);
+        return 0;
     }
     if (i > 0)
     {

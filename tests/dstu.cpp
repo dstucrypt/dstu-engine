@@ -110,7 +110,7 @@ int fbytes(unsigned char *buf, int num)
     return num;
 }
 
-void test(ENGINE* engine)
+void test()
 {
     auto* pkey = EVP_PKEY_new();
     if (pkey == nullptr)
@@ -213,7 +213,7 @@ int main()
 
     changeRand = std::make_unique<ChangeRand>();
 
-    test(engine);
+    test();
 
     changeRand.reset();
 

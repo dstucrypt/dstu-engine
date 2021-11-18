@@ -4,8 +4,7 @@
  *  @brief Functions for reading keys from IIT Key-6.dat container.
  */
 
-#include <openssl/evp.h>
-#include <openssl/bio.h>
+#include <openssl/ossl_typ.h>
 
 #include <stddef.h>
 #include <stdio.h>

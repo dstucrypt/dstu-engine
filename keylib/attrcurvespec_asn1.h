@@ -3,7 +3,7 @@
 #include "asn1.h"
 
 #include <openssl/asn1.h>
-#include <openssl/asn1t.h>
+#include <openssl/ossl_typ.h>
 
 typedef struct DSTU_AttrCurveSpec_st
 {

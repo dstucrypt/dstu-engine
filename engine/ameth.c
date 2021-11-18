@@ -9,6 +9,15 @@
 #include "compress.h" // dstu_point_expand, dstu_point_compress
 #include "err.h"
 
+#include <openssl/asn1.h>
+#include <openssl/bn.h>
+#include <openssl/crypto.h>
+#include <openssl/ec.h>
+#include <openssl/err.h>
+#include <openssl/evp.h>
+#include <openssl/obj_mac.h>
+#include <openssl/objects.h>
+#include <openssl/pkcs7.h>
 #include <openssl/x509.h>
 #ifndef OPENSSL_NO_CMS
 #include <openssl/cms.h>
@@ -154,6 +163,8 @@ static int dstu_asn1_param_print(BIO *out, const EVP_PKEY *pkey, int indent,
     DSTU_KEY *dstu_key = EVP_PKEY_get0(pkey);
     EVP_PKEY *pk;
     int ret;
+
+    (void) pctx; // Unused
 
     pk = EVP_PKEY_new();
     if (!pk || !EVP_PKEY_set1_EC_KEY(pk, dstu_key->ec))

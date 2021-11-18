@@ -135,7 +135,7 @@ static int dstu_rbg_bytes(unsigned char *buf, int num)
             rv = 0;
     }
 
-    for (i = 0; i < num; i++)
+    for (i = 0; i < (unsigned)num; i++)
     {
         *(buf + i) = 0;
         for (j = 0; j < 8; j++)

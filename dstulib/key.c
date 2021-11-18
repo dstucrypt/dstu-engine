@@ -8,6 +8,10 @@
 #include "compress.h"
 #include "params.h"
 
+#include <openssl/asn1.h>
+#include <openssl/bn.h>
+#include <openssl/crypto.h>
+#include <openssl/obj_mac.h>
 #include <openssl/objects.h>
 
 #include <string.h>
@@ -372,7 +376,6 @@ DSTU_KEY *key_from_asn1(const DSTU_AlgorithmParameters *params,
     EC_GROUP *group = NULL;
     EC_POINT *g = NULL;
     BN_CTX *ctx = NULL;
-    unsigned char *reverse_buffer = NULL;
 
     if (!key)
         return NULL;

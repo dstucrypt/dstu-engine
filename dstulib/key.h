@@ -6,10 +6,10 @@
 #ifndef DSTU_KEY_H_
 #define DSTU_KEY_H_
 
-#include "gost/gost89.h"
 #include "asn1.h"
 
 #include <openssl/ec.h>
+#include <openssl/ossl_typ.h>
 
 typedef struct dstu_key_st
 {

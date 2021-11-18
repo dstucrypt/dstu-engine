@@ -11,6 +11,13 @@
 #include "err.h"
 
 #include <openssl/asn1.h>
+#include <openssl/bn.h>
+#include <openssl/crypto.h>
+#include <openssl/ec.h>
+#include <openssl/err.h>
+#include <openssl/evp.h>
+#include <openssl/obj_mac.h>
+#include <openssl/objects.h>
 
 #include <string.h>
 
@@ -224,7 +231,8 @@ static int dstu_pkey_sign(EVP_PKEY_CTX *ctx, unsigned char *sig, size_t *siglen,
     EVP_PKEY* pkey = EVP_PKEY_CTX_get0_pkey(ctx);
     DSTU_KEY* key = NULL;
     const EC_GROUP* group = NULL;
-    int field_size, ret = 0, encoded_sig_size;
+    int field_size, ret = 0;
+    size_t encoded_sig_size = 0;
     ASN1_OCTET_STRING *dstu_sig = NULL;
     unsigned char *sig_data = NULL;
     BIGNUM *n = NULL;
@@ -311,7 +319,8 @@ static int dstu_pkey_verify(EVP_PKEY_CTX *ctx, const unsigned char *sig,
     EVP_PKEY* pkey = EVP_PKEY_CTX_get0_pkey(ctx);
     DSTU_KEY* key = NULL;
     const EC_GROUP* group = NULL;
-    int field_size, ret = 0;
+    size_t field_size = 0;
+    int ret = 0;
     unsigned char *sig_be;
     ASN1_OCTET_STRING *dstu_sig = NULL;
     BIGNUM *n = NULL;

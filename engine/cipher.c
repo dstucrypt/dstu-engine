@@ -9,6 +9,10 @@
 
 #include "gost/gost89.h" // gost_*
 
+#include <openssl/asn1.h>
+#include <openssl/evp.h>
+#include <openssl/obj_mac.h>
+
 #include <string.h>
 
 /* DSTU uses Russian GOST 28147 but with different s-boxes and no key meshing */
@@ -22,6 +26,7 @@
 static int dstu_cipher_init(EVP_CIPHER_CTX *ctx, const unsigned char *key,
                             const unsigned char *iv, int enc)
 {
+    (void) enc; // Unused
     gost_subst_block sbox;
     gost_ctx *gctx = EVP_CIPHER_CTX_get_cipher_data(ctx);
 
@@ -48,7 +53,7 @@ static int dstu_cipher_do_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     size_t to_use, i, blocks;
     gost_ctx *gctx = EVP_CIPHER_CTX_get_cipher_data(ctx);
     unsigned char tmpiv[DSTU_CIPHER_BLOCK_SIZE], *out_start = out;
-    int num = EVP_CIPHER_CTX_num(ctx);
+    size_t num = EVP_CIPHER_CTX_num(ctx);
     unsigned char *buf = EVP_CIPHER_CTX_buf_noconst(ctx);
     unsigned char *iv = EVP_CIPHER_CTX_iv_noconst(ctx);
 
@@ -139,6 +144,7 @@ static int dstu_cipher_do_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 
 static int dstu_cipher_cleanup(EVP_CIPHER_CTX *ctx)
 {
+    (void) ctx; // Unused
     return 1;
 }
 

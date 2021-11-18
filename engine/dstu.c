@@ -6,6 +6,10 @@
 #include "err.h"
 
 #include <openssl/engine.h>
+#include <openssl/err.h>
+#include <openssl/evp.h>
+#include <openssl/obj_mac.h>
+#include <openssl/ossl_typ.h>
 
 #include <string.h>
 
@@ -51,7 +55,7 @@ static EVP_CIPHER *dstu_cipher_get()
 
 static EVP_PKEY_METHOD *dstu_pkey_meth_get(int nid)
 {
-    int i = 0;
+    unsigned long long i = 0;
     for (i = 0; i < sizeof(dstu_nids) / sizeof(int); ++i)
     {
         if (nid == dstu_nids[i])
@@ -67,7 +71,7 @@ static EVP_PKEY_METHOD *dstu_pkey_meth_get(int nid)
 
 static EVP_PKEY_ASN1_METHOD *dstu_asn1_meth_get(int nid)
 {
-    int i = 0;
+    unsigned long long i = 0;
     for (i = 0; i < sizeof(dstu_nids) / sizeof(int); ++i)
     {
         if (nid == dstu_nids[i])
@@ -83,12 +87,13 @@ static EVP_PKEY_ASN1_METHOD *dstu_asn1_meth_get(int nid)
 
 static int dstu_engine_init(ENGINE *e)
 {
+    (void) e; // Unused
     return 1;
 }
 
 static int dstu_engine_finish(ENGINE *e)
 {
-    int i;
+    (void) e; // Unused
     dstu_cipher_free(dstu_cipher);
     dstu_digest_free(dstu_md);
 
@@ -100,6 +105,7 @@ static int dstu_engine_finish(ENGINE *e)
 static int dstu_digests(ENGINE *e, const EVP_MD **digest, const int **nids,
                         int nid)
 {
+    (void) e; // Unused
     if (digest && nid)
     {
         if (NID_dstu34311 == nid)
@@ -122,6 +128,7 @@ static int dstu_digests(ENGINE *e, const EVP_MD **digest, const int **nids,
 static int dstu_ciphers(ENGINE *e, const EVP_CIPHER **cipher, const int **nids,
                         int nid)
 {
+    (void) e; // Unused
     if (cipher && nid)
     {
         if (NID_dstu28147_cfb == nid)
@@ -144,6 +151,7 @@ static int dstu_ciphers(ENGINE *e, const EVP_CIPHER **cipher, const int **nids,
 static int dstu_pkey_meths(ENGINE *e, EVP_PKEY_METHOD **pmeth, const int **nids,
                            int nid)
 {
+    (void) e; // Unused
     if (!pmeth)
     {
         *nids = dstu_nids;
@@ -160,6 +168,7 @@ static int dstu_pkey_meths(ENGINE *e, EVP_PKEY_METHOD **pmeth, const int **nids,
 static int dstu_asn1_meths(ENGINE *e, EVP_PKEY_ASN1_METHOD **ameth,
                            const int **nids, int nid)
 {
+    (void) e; // Unused
     if (!ameth)
     {
         *nids = dstu_nids;

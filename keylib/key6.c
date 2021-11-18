@@ -8,6 +8,11 @@
 #include "gost/gost89.h"
 #include "gost/gosthash.h"
 
+#include <openssl/asn1.h>
+#include <openssl/bio.h>
+#include <openssl/crypto.h>
+#include <openssl/objects.h>
+
 #include <string.h>
 
 static const char iitStoreOID[] = "1.3.6.1.4.1.19398.1.1.1.2";

@@ -6,6 +6,9 @@
 #include "compress.h"
 #include "params.h"
 
+#include <openssl/bn.h>
+#include <openssl/ossl_typ.h>
+
 #include <string.h>
 
 static int bn_trace(const BIGNUM *bn, const BIGNUM *p, BN_CTX *ctx)

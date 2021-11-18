@@ -4,9 +4,7 @@
  *  @brief Functions for reading keys from Java Key Storage.
  */
 
-#include <openssl/evp.h>
-#include <openssl/x509.h>
-#include <openssl/bio.h>
+#include <openssl/ossl_typ.h>
 
 #include <stddef.h>
 #include <stdio.h>

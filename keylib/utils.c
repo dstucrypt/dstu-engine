@@ -2,12 +2,20 @@
 
 #include "attrcurvespec_asn1.h"
 
+#include "asn1.h"
 #include "compress.h"
 #include "key.h"
 #include "params.h"
 
-#include <openssl/x509.h>
+#include <openssl/asn1.h>
 #include <openssl/bn.h>
+#include <openssl/crypto.h>
+#include <openssl/evp.h>
+#include <openssl/ec.h>
+#include <openssl/obj_mac.h>
+#include <openssl/objects.h>
+#include <openssl/safestack.h>
+#include <openssl/x509.h>
 
 static const char dstu4145CurveOID[] = "1.3.6.1.4.1.19398.1.1.2.2";
 static const char dstu4145KeyOID[] = "1.3.6.1.4.1.19398.1.1.2.3";
@@ -86,6 +94,7 @@ static BIGNUM* makePoly(BN_CTX* ctx, const DSTU_BinaryField* field)
 
 static EC_POINT* makePoint(BN_CTX* ctx, const EC_GROUP* group, const ASN1_OCTET_STRING* p)
 {
+    (void) ctx;
     EC_POINT* res = EC_POINT_new(group);
     if (dstu_point_expand(ASN1_STRING_get0_data(p), ASN1_STRING_length(p), group, res) == 0)
     {

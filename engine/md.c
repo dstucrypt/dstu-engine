@@ -11,6 +11,9 @@
 #include "gost/gosthash.h" // gost_hash_ctx
 #include "gost/gost89.h" // gost_subst_block
 
+#include <openssl/evp.h>
+#include <openssl/obj_mac.h>
+
 #include <string.h>
 
 struct dstu_digest_ctx
