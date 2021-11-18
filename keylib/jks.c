@@ -547,6 +547,11 @@ int parseJKS(const void* data, size_t size, const char* password, size_t passSiz
             break;
         res->entries[i] = entry;
     }
+    if (entryPtr == NULL)
+    {
+        JKSFree(res);
+        return 0;
+    }
     if (i > 0)
     {
         *keys = JKSNew(type, i);
