@@ -4,6 +4,9 @@ project(dstu-engine LANGUAGES C VERSION 1.2.2)
 option(BUILD_TESTS "Build tests." OFF)
 option(ENABLE_CODECOV "Enable code coverage analysis." OFF)
 
+set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -W -Wall -Wextra -pedantic")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -W -Wall -Wextra -pedantic")
+
 add_subdirectory(dstulib)
 add_subdirectory(engine)
 add_subdirectory(keylib)
