@@ -1,6 +1,6 @@
 #pragma once
 
-#include <openssl/evp.h>
+#include <openssl/ossl_typ.h>
 
 #include <stddef.h>
 

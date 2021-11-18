@@ -4,8 +4,16 @@
 
 #include <iconv.h>
 
+#include <openssl/asn1.h>
+#include <openssl/bio.h>
+#include <openssl/crypto.h>
+#include <openssl/evp.h>
+#include <openssl/objects.h>
+#include <openssl/x509.h>
+
 #include <arpa/inet.h> // ntohl
 #include <string.h>
+#include <stdint.h>
 #include <errno.h>
 
 static const char pbes1OID[] = "1.3.6.1.4.1.42.2.19.1";

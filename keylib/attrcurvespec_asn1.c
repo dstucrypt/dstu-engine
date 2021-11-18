@@ -1,5 +1,7 @@
 #include "attrcurvespec_asn1.h"
 
+#include <openssl/asn1t.h>
+
 ASN1_SEQUENCE(DSTU_AttrCurveSpec) =
 {
     ASN1_SIMPLE(DSTU_AttrCurveSpec, spec, DSTU_CustomCurveSpec),

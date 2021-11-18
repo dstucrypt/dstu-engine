@@ -8,10 +8,9 @@
 #include "err.h"
 
 #include <openssl/bn.h>
+#include <openssl/crypto.h>
+#include <openssl/ec.h>
 #include <openssl/obj_mac.h>
-
-#include <string.h>
-#include <stddef.h>
 
 static int bn_truncate_bits(BIGNUM *bn, int bitsize)
 {

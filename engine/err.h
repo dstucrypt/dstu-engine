@@ -6,8 +6,6 @@
 #ifndef HEADER_DSTU_ERR_H
 #define HEADER_DSTU_ERR_H
 
-#include <openssl/err.h>
-
 #ifdef  __cplusplus
 extern "C" {
 #endif

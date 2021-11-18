@@ -1,5 +1,7 @@
 #include "iit_asn1.h"
 
+#include <openssl/asn1t.h>
+
 ASN1_SEQUENCE(IITParams) =
 {
     ASN1_SIMPLE(IITParams, mac, ASN1_OCTET_STRING),

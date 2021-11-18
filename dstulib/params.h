@@ -9,6 +9,7 @@
 #include "gost/gost89.h"
 
 #include <openssl/ec.h>
+#include <openssl/ossl_typ.h>
 
 #define DEFAULT_CURVE 6
 #define get_default_group() group_from_named_curve(DEFAULT_CURVE)

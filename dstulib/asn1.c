@@ -4,6 +4,8 @@
  ==================================================================== */
 #include "asn1.h"
 
+#include <openssl/asn1t.h>
+
 ASN1_SEQUENCE(DSTU_Pentanomial) =
 {
     ASN1_SIMPLE(DSTU_Pentanomial, k, ASN1_INTEGER),
