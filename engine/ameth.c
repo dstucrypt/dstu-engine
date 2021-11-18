@@ -155,6 +155,8 @@ static int dstu_asn1_param_print(BIO *out, const EVP_PKEY *pkey, int indent,
     EVP_PKEY *pk;
     int ret;
 
+    (void) pctx; // Unused
+
     pk = EVP_PKEY_new();
     if (!pk || !EVP_PKEY_set1_EC_KEY(pk, dstu_key->ec))
     {

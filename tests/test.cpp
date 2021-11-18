@@ -88,17 +88,6 @@ void checkBlock(const void* data, size_t size, const std::string& hexEtalon)
     }
 }
 
-void checkBlock(const void* data, size_t size, const void* edata, size_t esize)
-{
-    if (size != esize)
-        throw std::runtime_error("checkBlock: data size " + std::to_string(size) + " does not match etalon size " + std::to_string(esize));
-    const auto* ptr = static_cast<const unsigned char*>(data);
-    const auto* eptr = static_cast<const unsigned char*>(edata);
-    for (size_t i = 0; i < size; ++i)
-        if (ptr[i] != eptr[i])
-            throw std::runtime_error("checkBlock: bad data at position #" + std::to_string(i));
-}
-
 void printBlock(const void* data, size_t size)
 {
     const auto* ptr = static_cast<const uint8_t*>(data);

@@ -372,7 +372,6 @@ DSTU_KEY *key_from_asn1(const DSTU_AlgorithmParameters *params,
     EC_GROUP *group = NULL;
     EC_POINT *g = NULL;
     BN_CTX *ctx = NULL;
-    unsigned char *reverse_buffer = NULL;
 
     if (!key)
         return NULL;

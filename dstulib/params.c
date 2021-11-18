@@ -281,7 +281,9 @@ DSTU_NAMED_CURVE dstu_curves[] =
 
 int curve_nid_from_group(const EC_GROUP *group)
 {
-    int m = EC_GROUP_get_degree(group), i, nid = NID_undef;
+    unsigned long long i = 0;
+    int m = EC_GROUP_get_degree(group);
+    int nid = NID_undef;
     EC_GROUP* std_group = NULL;
 
     for (i = 0; i < (sizeof(dstu_curves) / sizeof(DSTU_NAMED_CURVE)); i++)
@@ -472,7 +474,7 @@ EC_GROUP *group_from_named_curve(int curve_num)
 
 EC_GROUP *group_from_nid(int nid)
 {
-    int i;
+    unsigned long long i = 0;
 
     for (i = 0; i < (sizeof(dstu_curves) / sizeof(DSTU_NAMED_CURVE)); i++)
     {

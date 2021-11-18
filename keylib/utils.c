@@ -86,6 +86,7 @@ static BIGNUM* makePoly(BN_CTX* ctx, const DSTU_BinaryField* field)
 
 static EC_POINT* makePoint(BN_CTX* ctx, const EC_GROUP* group, const ASN1_OCTET_STRING* p)
 {
+    (void) ctx;
     EC_POINT* res = EC_POINT_new(group);
     if (dstu_point_expand(ASN1_STRING_get0_data(p), ASN1_STRING_length(p), group, res) == 0)
     {
