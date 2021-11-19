@@ -66,7 +66,7 @@ void DSTU_KEY_free(DSTU_KEY *key)
 DSTU_AlgorithmParameters *asn1_from_key(const DSTU_KEY *key,
                                         int is_little_endian)
 {
-    DSTU_AlgorithmParameters *params = DSTU_AlgorithmParameters_new(), *ret = NULL;
+    DSTU_AlgorithmParameters *params = NULL, *ret = NULL;
     const EC_GROUP *group = EC_KEY_get0_group(key->ec);
     int curve_nid, poly[6], field_size;
     BN_CTX *ctx = NULL;
@@ -74,8 +74,10 @@ DSTU_AlgorithmParameters *asn1_from_key(const DSTU_KEY *key,
     BIGNUM *p, *a, *b, *n;
     unsigned char *compressed = NULL;
 
-    if (!params || !group)
+    if (!group)
         return NULL;
+
+    params = DSTU_AlgorithmParameters_new();
 
     if (key->sbox)
     {
