@@ -25,6 +25,7 @@ bugprone-*,\
 -clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling,\
 -bugprone-easily-swappable-parameters,\
 -modernize-avoid-bind,\
+-misc-no-recursion,\
 -modernize-use-trailing-return-type,\
 -readability-braces-around-statements, \
 -readability-function-cognitive-complexity,\
