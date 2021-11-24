@@ -1,5 +1,6 @@
 #include "jks.h"
 
+#include "keystore_internal.h"
 #include "utils.h"
 
 #include <iconv.h>
@@ -19,34 +20,8 @@
 static const char pbes1OID[] = "1.3.6.1.4.1.42.2.19.1";
 static const char keyProtectorOID[] = "1.3.6.1.4.1.42.2.17.1.1";
 
-struct jks_st
-{
-    size_t type;
-    size_t entryNum;
-    JKSEntry** entries;
-};
-
-typedef struct cert_st
-{
-    char* type;
-    X509* cert;
-} Cert;
-
-struct jks_entry_st
-{
-    size_t type;
-
-    // JKS_ENTRY_PRIVATE_KEY only
-    char* name;
-    size_t keyMaterialSize;
-    void* keyMaterial;
-    size_t pkeyNum;
-    EVP_PKEY** pkeys;
-
-    // JKS_ENTRY_PRIVATE_KEY & JKS_ENTRY_CERT
-    size_t certNum;
-    Cert** certs;
-};
+#define JKS_ENTRY_PRIVATE_KEY 1
+#define JKS_ENTRY_CERT 2
 
 static const void* ptrAt(const void* base, size_t shift)
 {
@@ -166,104 +141,31 @@ static int whiteHash(const void* d1, size_t ds1, const void* d2, size_t ds2, voi
     return ok;
 }
 
-static Cert* CertNew()
-{
-    Cert* res = OPENSSL_malloc(sizeof(Cert));
-    res->type = NULL;
-    res->cert = NULL;
-    return res;
-}
-
-static void CertFree(Cert* cert)
-{
-    if (cert == NULL)
-        return;
-    if (cert->type != NULL)
-        OPENSSL_free(cert->type);
-    if (cert->cert != NULL)
-        X509_free(cert->cert);
-    OPENSSL_free(cert);
-}
-
-static JKSEntry* JKSEntryNew(size_t type, size_t certNum)
-{
-    size_t i = 0;
-    JKSEntry* res = OPENSSL_malloc(sizeof(JKSEntry));
-    res->type = type;
-    res->name = NULL;
-    res->certNum = certNum;
-    res->certs = OPENSSL_malloc(certNum * sizeof(Cert*));
-    res->pkeyNum = 0;
-    res->pkeys = NULL;
-    res->keyMaterial = NULL;
-    res->keyMaterialSize = 0;
-    for (i = 0; i < certNum; ++i)
-        res->certs[i] = NULL;
-    return res;
-}
-
-static void JKSEntryFree(JKSEntry* entry)
-{
-    size_t i = 0;
-    if (entry == NULL)
-        return;
-    if (entry->name != NULL)
-        OPENSSL_free(entry->name);
-    if (entry->pkeys != NULL)
-    {
-        for (i = 0; i < entry->pkeyNum; ++i)
-            EVP_PKEY_free(entry->pkeys[i]);
-        OPENSSL_free(entry->pkeys);
-    }
-    if (entry->certs != NULL)
-    {
-        for (i = 0; i < entry->certNum; ++i)
-            CertFree(entry->certs[i]);
-        OPENSSL_free(entry->certs);
-    }
-    if (entry->keyMaterial != NULL)
-        OPENSSL_free(entry->keyMaterial);
-    OPENSSL_free(entry);
-}
-
-static JKS* JKSNew(size_t type, size_t entryNum)
-{
-    JKS* res = OPENSSL_malloc(sizeof(JKS));
-    size_t i = 0;
-    res->type = type;
-    res->entryNum = entryNum;
-    res->entries = OPENSSL_malloc(entryNum * sizeof(JKSEntry*));
-    for (i = 0; i < entryNum; ++i)
-        res->entries[i] = NULL;
-    return res;
-}
-
-static const void* parseCert(const void* data, Cert** certPtr)
+static const void* parseCert(const void* data, KeyStore* ks, size_t* certPos)
 {
     uint16_t typeLength = ntohs(read16(data, 0));
     uint32_t dataLength = ntohl(read32(data, sizeof(typeLength) + typeLength));
     const unsigned char* dataPtr = ptrAt(data, sizeof(typeLength) + typeLength + sizeof(dataLength));
-    char* type = NULL;
     X509* x509 = NULL;
-
-    type = OPENSSL_malloc(typeLength + 1);
-    copyAt(data, sizeof(typeLength), type, typeLength);
-    type[typeLength] = '\0';
 
     x509 = d2i_X509(NULL, &dataPtr, dataLength);
     if (x509 == NULL)
-    {
-        OPENSSL_free(type);
         return NULL;
-    }
 
-    *certPtr = CertNew();
-    (*certPtr)->type = type;
-    (*certPtr)->cert = x509;
+    KeyStore* tks = KeyStoreNew(0, 1);
+
+    KeyStoreSetCert(tks, 0, x509);
+    KeyStoreAppend(ks, tks);
+
+    KeyStoreFree(tks);
+
+    if (certPos != NULL)
+        ++(*certPos);
+
     return ptrAt(data, sizeof(typeLength) + typeLength + sizeof(dataLength) + dataLength);
 }
 
-static int fromKeyProtector(const void* data, size_t size, const char* pwd16, size_t pwd16Length, EVP_PKEY*** keys, size_t* numKeys)
+static int fromKeyProtector(const void* data, size_t size, const char* pwd16, size_t pwd16Length, KeyStore* ks, size_t* keyPos, size_t* certPos)
 {
     const size_t saltLength = 20;
     const size_t digestLength = 20;
@@ -310,108 +212,42 @@ static int fromKeyProtector(const void* data, size_t size, const char* pwd16, si
             return 0;
         }
 
-    r = keysFromPKCS8(decrypted, encryptedLength, keys, numKeys);
+    KeyStore* tks = NULL;
+
+    r = keysFromPKCS8(decrypted, encryptedLength, &tks);
+
+    if (r != 0)
+    {
+        KeyStoreAppend(ks, tks);
+        if (keyPos != NULL)
+            *keyPos += KeyStoreKeyNum(tks);
+        if (certPos != NULL)
+            *certPos += KeyStoreCertNum(tks);
+    }
+
+    KeyStoreFree(tks);
 
     OPENSSL_free(decrypted);
     return r;
 }
 
-static int fromPBES1(const void* data, size_t size, const void* pwd16, size_t pwd16Length, EVP_PKEY*** keys, size_t* numKeys)
+static int fromPBES1(const void* data, size_t size, const void* pwd16, size_t pwd16Length, KeyStore* ks, size_t* keyPos, size_t* certPos)
 {
     (void) data; //Unused
     (void) size; //Unused
     (void) pwd16; //Unused
     (void) pwd16Length; //Unused
-    (void) keys; //Unused
-    (void) numKeys; //Unused
+    (void) ks; //Unused
+    (void) keyPos; //Unused
+    (void) certPos; //Unused
     return 0;
 }
 
-static const void* parseKey(const void* data, JKSEntry** entry)
-{
-    uint16_t nameLength = ntohs(read16(data, 0));
-    uint32_t dataLength = ntohl(read32(data, sizeof(nameLength) + nameLength + 8)); // 8 bytes - 64-bit timestamp
-    uint32_t certNum = ntohl(read32(data, sizeof(nameLength) + nameLength + 8 + 4 + dataLength));
-    const unsigned char* dataPtr = ptrAt(data, sizeof(nameLength) + nameLength + 8 + sizeof(dataLength));
-    const unsigned char* certPtr = ptrAt(data, sizeof(nameLength) + nameLength + 8 + sizeof(dataLength) + dataLength + sizeof(certNum));
-    size_t i = 0;
-
-    *entry = JKSEntryNew(JKS_ENTRY_PRIVATE_KEY, certNum);
-
-    (*entry)->name = OPENSSL_malloc(nameLength + 1);
-    copyAt(data, sizeof(nameLength), (*entry)->name, nameLength);
-    (*entry)->name[nameLength] = '\0';
-
-    (*entry)->keyMaterialSize = dataLength;
-    (*entry)->keyMaterial = OPENSSL_memdup(dataPtr, dataLength);
-
-    for (i = 0; i < certNum; ++i)
-    {
-        certPtr = parseCert(certPtr, &(*entry)->certs[i]);
-        if (certPtr == NULL)
-        {
-            JKSEntryFree(*entry);
-            return NULL;
-        }
-    }
-    return certPtr;
-}
-
-static const void* parseEntry(const void* data, JKSEntry** entry)
-{
-    uint32_t tag = ntohl(read32(data, 0));
-    switch (tag)
-    {
-        case JKS_ENTRY_PRIVATE_KEY:
-            return parseKey(ptrAt(data, sizeof(tag)), entry);
-        case JKS_ENTRY_CERT:
-            *entry = JKSEntryNew(JKS_ENTRY_CERT, 1);
-            return parseCert(ptrAt(data, sizeof(tag)), &(*entry)->certs[0]);
-    }
-    return NULL;
-}
-
-void JKSFree(JKS* jks)
-{
-    size_t i = 0;
-    if (jks == NULL)
-        return;
-    if (jks->entries != NULL)
-    {
-        for (i = 0; i < jks->entryNum; ++i)
-            JKSEntryFree(jks->entries[i]);
-        OPENSSL_free(jks->entries);
-    }
-    OPENSSL_free(jks);
-}
-
-size_t JKSType(const JKS* jks)
-{
-    return jks->type;
-}
-
-size_t JKSEntryNum(const JKS* jks)
-{
-    return jks->entryNum;
-}
-
-JKSEntry* JKSEntryGet(const JKS* jks, size_t pos)
-{
-    if (pos < jks->entryNum)
-        return jks->entries[pos];
-    return NULL;
-}
-
-size_t JKSEntryType(const JKSEntry* entry)
-{
-    return entry->type;
-}
-
-int JKSEntryDecrypt(JKSEntry* entry, const char* password, size_t passSize)
+static int decryptKey(const void* data, size_t dataSize, const char* password, size_t passSize, KeyStore* ks, size_t* keyPos, size_t* certPos)
 {
     void* pwd16 = NULL;
     size_t pwd16Length = 0;
-    const unsigned char* dataPtr = entry->keyMaterial;
+    const unsigned char* dataPtr = data;
     X509_SIG* epkInfo = NULL;
     const X509_ALGOR* algo = NULL;
     const ASN1_OBJECT* aobj = NULL;
@@ -419,13 +255,10 @@ int JKSEntryDecrypt(JKSEntry* entry, const char* password, size_t passSize)
     ASN1_OBJECT* pbes1 = NULL;
     const ASN1_OCTET_STRING* keyData = NULL;
 
-    if (entry->type != JKS_ENTRY_PRIVATE_KEY)
-        return 1;
-
     if (toUTF16BE(password, passSize, &pwd16, &pwd16Length) == 0)
         return 0;
 
-    epkInfo = d2i_X509_SIG(NULL, &dataPtr, entry->keyMaterialSize);
+    epkInfo = d2i_X509_SIG(NULL, &dataPtr, dataSize);
     if (epkInfo == NULL)
     {
         OPENSSL_free(pwd16);
@@ -439,7 +272,7 @@ int JKSEntryDecrypt(JKSEntry* entry, const char* password, size_t passSize)
 
     if (OBJ_cmp(aobj, keyProtector) == 0)
     {
-        if (fromKeyProtector(ASN1_STRING_get0_data(keyData), ASN1_STRING_length(keyData), pwd16, pwd16Length, &entry->pkeys, &entry->pkeyNum) == 0)
+        if (fromKeyProtector(ASN1_STRING_get0_data(keyData), ASN1_STRING_length(keyData), pwd16, pwd16Length, ks, keyPos, certPos) == 0)
         {
             ASN1_OBJECT_free(pbes1);
             ASN1_OBJECT_free(keyProtector);
@@ -450,7 +283,7 @@ int JKSEntryDecrypt(JKSEntry* entry, const char* password, size_t passSize)
     }
     else if (OBJ_cmp(aobj, pbes1) == 0)
     {
-        if (fromPBES1(ASN1_STRING_get0_data(keyData), ASN1_STRING_length(keyData), pwd16, pwd16Length, &entry->pkeys, &entry->pkeyNum) == 0)
+        if (fromPBES1(ASN1_STRING_get0_data(keyData), ASN1_STRING_length(keyData), pwd16, pwd16Length, ks, keyPos, certPos) == 0)
         {
             ASN1_OBJECT_free(pbes1);
             ASN1_OBJECT_free(keyProtector);
@@ -465,106 +298,88 @@ int JKSEntryDecrypt(JKSEntry* entry, const char* password, size_t passSize)
     OPENSSL_free(pwd16);
     X509_SIG_free(epkInfo);
 
-    if (entry->pkeys == NULL || entry->pkeyNum == 0)
-        return 0;
-
     return 1;
 }
 
-const char* JKSEntryPKeyName(const JKSEntry* entry)
+static const void* parseKey(const void* data, const char* keyPass, size_t keyPassSize, KeyStore* ks, size_t* keyPos, size_t* certPos)
 {
-    return entry->name;
+    uint16_t nameLength = ntohs(read16(data, 0));
+    uint32_t dataLength = ntohl(read32(data, sizeof(nameLength) + nameLength + 8)); // 8 bytes - 64-bit timestamp
+    uint32_t certNum = ntohl(read32(data, sizeof(nameLength) + nameLength + 8 + 4 + dataLength));
+    const unsigned char* dataPtr = ptrAt(data, sizeof(nameLength) + nameLength + 8 + sizeof(dataLength));
+    const unsigned char* certPtr = ptrAt(data, sizeof(nameLength) + nameLength + 8 + sizeof(dataLength) + dataLength + sizeof(certNum));
+    size_t i = 0;
+
+    if (decryptKey(dataPtr, dataLength, keyPass, keyPassSize, ks, keyPos, certPos) == 0)
+        return NULL;
+
+    for (i = 0; i < certNum; ++i)
+    {
+        certPtr = parseCert(certPtr, ks, certPos);
+        if (certPtr == NULL)
+            return NULL;
+    }
+    return certPtr;
 }
 
-size_t JKSEntryPKeyNum(const JKSEntry* entry)
+static const void* parseEntry(const void* data, const char* keyPass, size_t keyPassSize, KeyStore* ks, size_t* keyPos, size_t* certPos)
 {
-    return entry->pkeyNum;
-}
-
-const EVP_PKEY* JKSEntryPKey(const JKSEntry* entry, size_t pos)
-{
-    return entry->pkeys[pos];
-}
-
-size_t JKSEntryCertNum(const JKSEntry* entry)
-{
-    return entry->certNum;
-}
-
-const X509* JKSEntryCert(const JKSEntry* entry, size_t pos)
-{
-    if (pos < entry->certNum)
-        return entry->certs[pos]->cert;
+    uint32_t tag = ntohl(read32(data, 0));
+    switch (tag)
+    {
+        case JKS_ENTRY_PRIVATE_KEY:
+            return parseKey(ptrAt(data, sizeof(tag)), keyPass, keyPassSize, ks, keyPos, certPos);
+        case JKS_ENTRY_CERT:
+            return parseCert(ptrAt(data, sizeof(tag)), ks, certPos);
+    }
     return NULL;
 }
 
-const char* JKSEntryCertType(const JKSEntry* entry, size_t pos)
-{
-    if (pos > entry->certNum)
-        return NULL;
-    return entry->certs[pos]->type;
-}
-
-int parseJKS(const void* data, size_t size, const char* password, size_t passSize, JKS** keys)
+int parseJKS(const void* data, size_t size, const char* storagePass, size_t storagePassSize, const char* keyPass, size_t keyPassSize, KeyStore** ks)
 {
     const size_t digestLength = 20;
     uint32_t magic = read32(data, 0);
     uint32_t entries = ntohl(read32(data, sizeof(magic) + 4)); // 4 bytes - 32-bit version
     const unsigned char* entryPtr = ptrAt(data, sizeof(magic) + 4 + sizeof(entries));
     unsigned char digest[digestLength];
-    size_t type = 0;
     size_t i = 0;
     size_t j = 0;
-    JKS* res = NULL;
-    JKSEntry* entry = NULL;
     void* pwd16 = NULL;
     size_t pwd16Length = 0;
+    size_t keyPos = 0;
+    size_t certPos = 0;
 
     (void) size; // Unused
 
     // Check MAGIC
-    switch (magic)
-    {
-        case 0xedfeedfe:
-            type = JKS_TYPE_JKS;
-            break;
-        case 0xcececece:
-            type = JKS_TYPE_JCEKS;
-            break;
-        default:
-            return 0;
-    }
+    if (magic != 0xedfeedfe && // JKS
+        magic != 0xcececece)   // JCEKS
+        return 0;
+
     // Check version
     if (read32(data, sizeof(magic)) != 0x02000000) // 0x00000002 in BE
         return 0;
-    if (toUTF16BE(password, passSize, &pwd16, &pwd16Length) == 0)
+    if (toUTF16BE(storagePass, storagePassSize, &pwd16, &pwd16Length) == 0)
         return 0;
-    res = JKSNew(type, entries);
+
+    *ks = KeyStoreNew(0, 0); // Start from zero
+
     for (i = 0; i < entries; ++i)
     {
-        entryPtr = parseEntry(entryPtr, &entry);
+        entryPtr = parseEntry(entryPtr, keyPass, keyPassSize, *ks, &keyPos, &certPos);
         if (entryPtr == NULL)
             break;
-        res->entries[i] = entry;
     }
+
     if (entryPtr == NULL)
     {
-        JKSFree(res);
+        KeyStoreFree(*ks);
         return 0;
     }
-    if (i > 0)
-    {
-        *keys = JKSNew(type, i);
-        for (j = 0; j < i; ++j)
-        {
-            (*keys)->entries[j] = res->entries[j];
-            res->entries[j] = NULL;
-        }
-    }
-    JKSFree(res);
 
     if (whiteHash(pwd16, pwd16Length, data, entryPtr - (const unsigned char*)data, digest) == 0)
     {
+        KeyStoreFree(*ks);
         OPENSSL_free(pwd16);
         return 0;
     }
@@ -572,23 +387,26 @@ int parseJKS(const void* data, size_t size, const char* password, size_t passSiz
 
     for (j = 0; j < digestLength; ++j)
         if (digest[j] != entryPtr[j])
+        {
+            KeyStoreFree(*ks);
             return 0;
+        }
 
-    return i > 0 ? 1 : 0;
+    return 1;
 }
 
-int readJKS(FILE* fp, const char* password, size_t passSize, JKS** keys)
+int readJKS(FILE* fp, const char* storagePass, size_t storagePassSize, const char* keyPass, size_t keyPassSize, KeyStore** ks)
 {
     int res = 0;
     BIO* bio = BIO_new_fp(fp, 0);
     if (!bio)
         return 0;
-    res = readJKS_bio(bio, password, passSize, keys);
+    res = readJKS_bio(bio, storagePass, storagePassSize, keyPass, keyPassSize, ks);
     BIO_free(bio);
     return res;
 }
 
-int readJKS_bio(BIO* bio, const char* password, size_t passSize, JKS** keys)
+int readJKS_bio(BIO* bio, const char* storagePass, size_t storagePassSize, const char* keyPass, size_t keyPassSize, KeyStore** ks)
 {
     unsigned char buf[1024];
     BIO *mem = BIO_new(BIO_s_mem());
@@ -621,7 +439,7 @@ int readJKS_bio(BIO* bio, const char* password, size_t passSize, JKS** keys)
         BIO_free(mem);
         return 0;
     }
-    res = parseJKS(ptr, bytes, password, passSize, keys);
+    res = parseJKS(ptr, bytes, storagePass, storagePassSize, keyPass, keyPassSize, ks);
     BIO_free(mem);
     return res;
 }

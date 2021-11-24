@@ -1,4 +1,5 @@
 #include "jks.h"
+#include "keystore.h"
 
 #include <openssl/evp.h>
 #include <openssl/engine.h>
@@ -27,39 +28,19 @@ void testJKS(const std::string& file, const std::string& storagePass, const std:
     auto* fp = fopen(file.c_str(), "r");
     if (fp == nullptr)
         throw std::runtime_error("testJKS: failed to open '" + file + "'. " + strerror(errno));
-    JKS* jks = nullptr;
-    if (readJKS(fp, storagePass.c_str(), storagePass.length(), &jks) == 0)
+    KeyStore* ks = nullptr;
+    if (readJKS(fp, storagePass.c_str(), storagePass.length(), keyPass.c_str(), keyPass.length(), &ks) == 0)
         throw std::runtime_error("testJKS: failed to read key from '" + file + "'.");
     fclose(fp);
-    if (jks == nullptr)
+    if (ks == nullptr)
         throw std::runtime_error("testJKS: no keys from '" + file + "'.");
-    const auto jksType = JKSType(jks);
-    if (jksType != JKS_TYPE_JKS)
-        throw std::runtime_error("testJKS: unexpected JKS type. Expected " + std::to_string(JKS_TYPE_JKS) + " (JKS), got " + std::to_string(jksType));
-    const auto entryNum = JKSEntryNum(jks);
-    if (entryNum != 1)
-        throw std::runtime_error("testJKS: unexpected number of entries. Expected 1, got " + std::to_string(entryNum));
-    for (size_t i = 0; i < entryNum; ++i)
-    {
-        auto entry = JKSEntryGet(jks, i);
-        if (entry == nullptr)
-            throw std::runtime_error("testJKS: empty JKS entry #" + std::to_string(i));
-        const auto entryType = JKSEntryType(entry);
-        if (entryType != JKS_ENTRY_PRIVATE_KEY)
-            throw std::runtime_error("testJKS: unexpected JKS entry type. Expected " + std::to_string(JKS_ENTRY_PRIVATE_KEY) + " (private key), got " + std::to_string(entryType));
-        auto pkeyNum = JKSEntryPKeyNum(entry);
-        if (pkeyNum != 0)
-            throw std::runtime_error("testJKS: unexpected number of private keys. Expected 0 (not decrypted), got " + std::to_string(pkeyNum));
-        if (JKSEntryDecrypt(entry, keyPass.c_str(), keyPass.length()) == 0)
-            throw std::runtime_error("testJKS: failed to decrypt private key entry.");
-        pkeyNum = JKSEntryPKeyNum(entry);
-        if (pkeyNum != 2)
-            throw std::runtime_error("testJKS: unexpected number of private keys. Expected 2, got " + std::to_string(pkeyNum));
-        const auto certNum = JKSEntryCertNum(entry);
-        if (certNum != 3)
-            throw std::runtime_error("testJKS: unexpected number of certificates. Expected 3, got " + std::to_string(certNum));
-    }
-    JKSFree(jks);
+    const auto keyNum = KeyStoreKeyNum(ks);
+    if (keyNum != 2)
+        throw std::runtime_error("testJKS: unexpected number of keys. Expected 2, got " + std::to_string(keyNum));
+    const auto certNum = KeyStoreCertNum(ks);
+    if (certNum != 3)
+        throw std::runtime_error("testJKS: unexpected number of certs. Expected 3, got " + std::to_string(certNum));
+    KeyStoreFree(ks);
 }
 
 }

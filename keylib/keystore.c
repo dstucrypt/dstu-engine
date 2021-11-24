@@ -44,6 +44,31 @@ KeyStore* KeyStoreNew(size_t keyNum, size_t certNum)
     return res;
 }
 
+void KeyStoreAppend(KeyStore* to, KeyStore* from)
+{
+    size_t i = 0;
+    if (from->keyNum > 0)
+    {
+        to->keys = OPENSSL_clear_realloc(to->keys, to->keyNum * sizeof(EVP_PKEY*), (to->keyNum + from->keyNum) * sizeof(EVP_PKEY*));
+        for (i = 0; i < from->keyNum; ++i)
+        {
+            to->keys[to->keyNum + i] = from->keys[i];
+            from->keys[i] = NULL;
+        }
+        to->keyNum += from->keyNum;
+    }
+    if (from->certNum > 0)
+    {
+        to->certs = OPENSSL_clear_realloc(to->certs, to->certNum * sizeof(X509*), (to->certNum + from->certNum) * sizeof(X509*));
+        for (i = 0; i < from->certNum; ++i)
+        {
+            to->certs[to->certNum + i] = from->certs[i];
+            from->certs[i] = NULL;
+        }
+        to->certNum += from->certNum;
+    }
+}
+
 void KeyStoreFree(KeyStore* ks)
 {
     size_t i = 0;
@@ -51,15 +76,15 @@ void KeyStoreFree(KeyStore* ks)
     {
         for (i = 0; i < ks->keyNum; ++i)
             EVP_PKEY_free(ks->keys[i]);
-        OPENSSL_free(ks->keys);
+        OPENSSL_clear_free(ks->keys, ks->keyNum * sizeof(EVP_PKEY*));
     }
     if (ks->certs != NULL)
     {
         for (i = 0; i < ks->certNum; ++i)
             X509_free(ks->certs[i]);
-        OPENSSL_free(ks->certs);
+        OPENSSL_clear_free(ks->certs, ks->certNum * sizeof(X509*));
     }
-    OPENSSL_free(ks);
+    OPENSSL_clear_free(ks, sizeof(KeyStore));
 }
 
 size_t KeyStoreKeyNum(const KeyStore* ks)

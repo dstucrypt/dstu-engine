@@ -8,6 +8,8 @@ extern "C" {
 
 KeyStore* KeyStoreNew(size_t keyNum, size_t certNum);
 
+void KeyStoreAppend(KeyStore* to, KeyStore* from);
+
 void KeyStoreSetKey(KeyStore* ks, size_t pos, EVP_PKEY* key);
 void KeyStoreSetCert(KeyStore* ks, size_t pos, X509* cert);
 
