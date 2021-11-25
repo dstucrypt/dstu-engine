@@ -15,6 +15,8 @@ This project is based on `dstucrypt/openssl-dstu` repository which is a fork of 
 
 #### Key containers:
  * Key-6.dat - custom IIT key container with password protection.
+ * JKS - Java Key Store.
+ * PKCS#12 - archive file format from the RSA Labs.
 
 ## Building and installation instructions
 ```
@@ -91,3 +93,4 @@ fclose(fp);
 ## Links
  * https://github.com/dstucrypt/openssl-dstu
  * https://github.com/gost-engine/engine
+ * https://datatracker.ietf.org/doc/html/rfc7292
