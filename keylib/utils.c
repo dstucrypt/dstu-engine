@@ -9,6 +9,7 @@
 #include "key.h"
 #include "params.h"
 
+#include <openssl/ossl_typ.h>
 #include <openssl/asn1.h>
 #include <openssl/bn.h>
 #include <openssl/crypto.h>

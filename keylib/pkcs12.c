@@ -2,8 +2,13 @@
 
 #include "keystore_internal.h"
 
-#include <openssl/pkcs12.h>
 #include <openssl/bio.h>
+#include <openssl/obj_mac.h>
+#include <openssl/objects.h>
+#include <openssl/pkcs7.h>
+#include <openssl/pkcs12.h>
+#include <openssl/safestack.h>
+#include <openssl/x509.h>
 
 static int fromBags(const STACK_OF(PKCS12_SAFEBAG)* bags, const char* password, size_t passSize, KeyStore* ks, size_t* keyPos, size_t* certPos);
 static int countKeysCertsInBags(const STACK_OF(PKCS12_SAFEBAG)* bags, const char* password, size_t passSize, size_t* numKeys, size_t* numCerts);

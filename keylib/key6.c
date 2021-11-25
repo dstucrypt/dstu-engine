@@ -1,6 +1,5 @@
 #include "key6.h"
 
-#include "keystore_internal.h"
 #include "utils.h"
 #include "iit_asn1.h"
 
