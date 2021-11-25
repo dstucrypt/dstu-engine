@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.13"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Keylib: keylib/jks.h File Reference</title>
+<title>Keylib: keylib/pkcs12.h File Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -66,42 +66,41 @@ $(function() {
   <div class="summary">
 <a href="#func-members">Functions</a>  </div>
   <div class="headertitle">
-<div class="title">jks.h File Reference</div>  </div>
+<div class="title">pkcs12.h File Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
 
-<p>Functions for reading keys from Java Key Storage.  
+<p>Functions for reading keys from PKCS#12 container.  
 <a href="#details">More...</a></p>
 <div class="textblock"><code>#include &quot;<a class="el" href="keystore_8h_source.html">keystore.h</a>&quot;</code><br />
 <code>#include &lt;openssl/ossl_typ.h&gt;</code><br />
-<code>#include &lt;stddef.h&gt;</code><br />
 <code>#include &lt;stdio.h&gt;</code><br />
 </div>
-<p><a href="jks_8h_source.html">Go to the source code of this file.</a></p>
+<p><a href="pkcs12_8h_source.html">Go to the source code of this file.</a></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions</h2></td></tr>
-<tr class="memitem:a73148d729be88fd3c853c927328f2ff4"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="jks_8h.html#a73148d729be88fd3c853c927328f2ff4">parseJKS</a> (const void *data, size_t size, const char *storagePass, size_t storagePassSize, const char *keyPass, size_t keyPassSize, <a class="el" href="keystore_8h.html#a47001241c3170d4d172af46d23cee0af">KeyStore</a> **ks)</td></tr>
-<tr class="memdesc:a73148d729be88fd3c853c927328f2ff4"><td class="mdescLeft">&#160;</td><td class="mdescRight">extracts private keys and certs from Java Key Store.  <a href="#a73148d729be88fd3c853c927328f2ff4">More...</a><br /></td></tr>
-<tr class="separator:a73148d729be88fd3c853c927328f2ff4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:abfeec227577e7615660745534eb24f32"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="jks_8h.html#abfeec227577e7615660745534eb24f32">readJKS</a> (FILE *fp, const char *storagePass, size_t storagePassSize, const char *keyPass, size_t keyPassSize, <a class="el" href="keystore_8h.html#a47001241c3170d4d172af46d23cee0af">KeyStore</a> **ks)</td></tr>
-<tr class="memdesc:abfeec227577e7615660745534eb24f32"><td class="mdescLeft">&#160;</td><td class="mdescRight">extracts private keys and certs from Java Key Store file.  <a href="#abfeec227577e7615660745534eb24f32">More...</a><br /></td></tr>
-<tr class="separator:abfeec227577e7615660745534eb24f32"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2c8373198da78bba1ec0a727c81bcf47"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="jks_8h.html#a2c8373198da78bba1ec0a727c81bcf47">readJKS_bio</a> (BIO *bio, const char *storagePass, size_t storagePassSize, const char *keyPass, size_t keyPassSize, <a class="el" href="keystore_8h.html#a47001241c3170d4d172af46d23cee0af">KeyStore</a> **ks)</td></tr>
-<tr class="memdesc:a2c8373198da78bba1ec0a727c81bcf47"><td class="mdescLeft">&#160;</td><td class="mdescRight">extracts private keys and certs from Java Key Store using OpenSSL BIO interface.  <a href="#a2c8373198da78bba1ec0a727c81bcf47">More...</a><br /></td></tr>
-<tr class="separator:a2c8373198da78bba1ec0a727c81bcf47"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0412a92e5772d3f4b2e0e7dd43668c5c"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="pkcs12_8h.html#a0412a92e5772d3f4b2e0e7dd43668c5c">parsePKCS12</a> (const void *data, size_t dataSize, const char *password, size_t passSize, <a class="el" href="keystore_8h.html#a47001241c3170d4d172af46d23cee0af">KeyStore</a> **ks)</td></tr>
+<tr class="memdesc:a0412a92e5772d3f4b2e0e7dd43668c5c"><td class="mdescLeft">&#160;</td><td class="mdescRight">extracts private keys from PKCS#12 container.  <a href="#a0412a92e5772d3f4b2e0e7dd43668c5c">More...</a><br /></td></tr>
+<tr class="separator:a0412a92e5772d3f4b2e0e7dd43668c5c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa13551df353ae35640b482a4459b3110"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="pkcs12_8h.html#aa13551df353ae35640b482a4459b3110">readPKCS12</a> (FILE *fp, const char *password, size_t passSize, <a class="el" href="keystore_8h.html#a47001241c3170d4d172af46d23cee0af">KeyStore</a> **ks)</td></tr>
+<tr class="memdesc:aa13551df353ae35640b482a4459b3110"><td class="mdescLeft">&#160;</td><td class="mdescRight">extracts private keys from PKCS#12 container.  <a href="#aa13551df353ae35640b482a4459b3110">More...</a><br /></td></tr>
+<tr class="separator:aa13551df353ae35640b482a4459b3110"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a338e99eab360e7609fe878b2b22b0f54"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="pkcs12_8h.html#a338e99eab360e7609fe878b2b22b0f54">readPKCS12_bio</a> (BIO *bio, const char *password, size_t passSize, <a class="el" href="keystore_8h.html#a47001241c3170d4d172af46d23cee0af">KeyStore</a> **ks)</td></tr>
+<tr class="memdesc:a338e99eab360e7609fe878b2b22b0f54"><td class="mdescLeft">&#160;</td><td class="mdescRight">extracts private keys from PKCS#12 container.  <a href="#a338e99eab360e7609fe878b2b22b0f54">More...</a><br /></td></tr>
+<tr class="separator:a338e99eab360e7609fe878b2b22b0f54"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Functions for reading keys from Java Key Storage. </p>
+<div class="textblock"><p>Functions for reading keys from PKCS#12 container. </p>
 </div><h2 class="groupheader">Function Documentation</h2>
-<a id="a73148d729be88fd3c853c927328f2ff4"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a73148d729be88fd3c853c927328f2ff4">&#9670;&nbsp;</a></span>parseJKS()</h2>
+<a id="a0412a92e5772d3f4b2e0e7dd43668c5c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0412a92e5772d3f4b2e0e7dd43668c5c">&#9670;&nbsp;</a></span>parsePKCS12()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">int parseJKS </td>
+          <td class="memname">int parsePKCS12 </td>
           <td>(</td>
           <td class="paramtype">const void *&#160;</td>
           <td class="paramname"><em>data</em>, </td>
@@ -116,25 +115,13 @@ Functions</h2></td></tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">const char *&#160;</td>
-          <td class="paramname"><em>storagePass</em>, </td>
+          <td class="paramname"><em>password</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">size_t&#160;</td>
-          <td class="paramname"><em>storagePassSize</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">const char *&#160;</td>
-          <td class="paramname"><em>keyPass</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">size_t&#160;</td>
-          <td class="paramname"><em>keyPassSize</em>, </td>
+          <td class="paramname"><em>passSize</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -150,15 +137,13 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>extracts private keys and certs from Java Key Store. </p>
+<p>extracts private keys from PKCS#12 container. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">data</td><td>container data; </td></tr>
     <tr><td class="paramname">size</td><td>container data size; </td></tr>
-    <tr><td class="paramname">storagePass</td><td>container password; </td></tr>
-    <tr><td class="paramname">storagePassSize</td><td>container password size; </td></tr>
-    <tr><td class="paramname">keyPass</td><td>key password; </td></tr>
-    <tr><td class="paramname">keyPassSize</td><td>key password size; </td></tr>
+    <tr><td class="paramname">password</td><td>container encryption password; </td></tr>
+    <tr><td class="paramname">passSize</td><td>password size; </td></tr>
     <tr><td class="paramname">ks</td><td>KeyStore pointer outparam. </td></tr>
   </table>
   </dd>
@@ -167,14 +152,14 @@ Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="abfeec227577e7615660745534eb24f32"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#abfeec227577e7615660745534eb24f32">&#9670;&nbsp;</a></span>readJKS()</h2>
+<a id="aa13551df353ae35640b482a4459b3110"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa13551df353ae35640b482a4459b3110">&#9670;&nbsp;</a></span>readPKCS12()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">int readJKS </td>
+          <td class="memname">int readPKCS12 </td>
           <td>(</td>
           <td class="paramtype">FILE *&#160;</td>
           <td class="paramname"><em>fp</em>, </td>
@@ -183,25 +168,13 @@ Functions</h2></td></tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">const char *&#160;</td>
-          <td class="paramname"><em>storagePass</em>, </td>
+          <td class="paramname"><em>password</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">size_t&#160;</td>
-          <td class="paramname"><em>storagePassSize</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">const char *&#160;</td>
-          <td class="paramname"><em>keyPass</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">size_t&#160;</td>
-          <td class="paramname"><em>keyPassSize</em>, </td>
+          <td class="paramname"><em>passSize</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -217,14 +190,12 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>extracts private keys and certs from Java Key Store file. </p>
+<p>extracts private keys from PKCS#12 container. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">fp</td><td>file handle; </td></tr>
-    <tr><td class="paramname">storagePass</td><td>container password; </td></tr>
-    <tr><td class="paramname">storagePassSize</td><td>container password size; </td></tr>
-    <tr><td class="paramname">keyPass</td><td>key password; </td></tr>
-    <tr><td class="paramname">keyPassSize</td><td>key password size; </td></tr>
+    <tr><td class="paramname">password</td><td>container encryption password; </td></tr>
+    <tr><td class="paramname">passSize</td><td>password size; </td></tr>
     <tr><td class="paramname">ks</td><td>KeyStore pointer outparam. </td></tr>
   </table>
   </dd>
@@ -233,14 +204,14 @@ Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="a2c8373198da78bba1ec0a727c81bcf47"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a2c8373198da78bba1ec0a727c81bcf47">&#9670;&nbsp;</a></span>readJKS_bio()</h2>
+<a id="a338e99eab360e7609fe878b2b22b0f54"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a338e99eab360e7609fe878b2b22b0f54">&#9670;&nbsp;</a></span>readPKCS12_bio()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">int readJKS_bio </td>
+          <td class="memname">int readPKCS12_bio </td>
           <td>(</td>
           <td class="paramtype">BIO *&#160;</td>
           <td class="paramname"><em>bio</em>, </td>
@@ -249,25 +220,13 @@ Functions</h2></td></tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">const char *&#160;</td>
-          <td class="paramname"><em>storagePass</em>, </td>
+          <td class="paramname"><em>password</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">size_t&#160;</td>
-          <td class="paramname"><em>storagePassSize</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">const char *&#160;</td>
-          <td class="paramname"><em>keyPass</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">size_t&#160;</td>
-          <td class="paramname"><em>keyPassSize</em>, </td>
+          <td class="paramname"><em>passSize</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -283,14 +242,12 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>extracts private keys and certs from Java Key Store using OpenSSL BIO interface. </p>
+<p>extracts private keys from PKCS#12 container. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">bio</td><td>OpenSSL BIO; </td></tr>
-    <tr><td class="paramname">storagePass</td><td>container password; </td></tr>
-    <tr><td class="paramname">storagePassSize</td><td>container password size; </td></tr>
-    <tr><td class="paramname">keyPass</td><td>key password; </td></tr>
-    <tr><td class="paramname">keyPassSize</td><td>key password size; </td></tr>
+    <tr><td class="paramname">password</td><td>container encryption password; </td></tr>
+    <tr><td class="paramname">passSize</td><td>password size; </td></tr>
     <tr><td class="paramname">ks</td><td>KeyStore pointer outparam. </td></tr>
   </table>
   </dd>

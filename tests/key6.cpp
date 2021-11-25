@@ -1,4 +1,5 @@
 #include "key6.h"
+#include "keystore.h"
 
 #include <openssl/evp.h>
 #include <openssl/engine.h>
@@ -27,18 +28,19 @@ void testKey6(const std::string& file, const std::string& password)
     auto* fp = fopen(file.c_str(), "r");
     if (fp == nullptr)
         throw std::runtime_error("testKey6: failed to open '" + file + "'. " + strerror(errno));
-    EVP_PKEY** keys = nullptr;
-    size_t numKeys = 0;
-    if (readKey6(fp, password.c_str(), password.length(), &keys, &numKeys) == 0)
+    KeyStore* ks = nullptr;
+    if (readKey6(fp, password.c_str(), password.length(), &ks) == 0)
         throw std::runtime_error("testKey6: failed to read key from '" + file + "'.");
-    if (keys == nullptr || numKeys == 0)
-        throw std::runtime_error("testKey6: no keys from '" + file + "'.");
-    if (numKeys != 2)
-        throw std::runtime_error("testKey6: '" + file + "' contains two kays, one got.");
-    for (size_t i = 0; i < numKeys; ++i)
-        EVP_PKEY_free(keys[i]);
-    OPENSSL_free(keys);
     fclose(fp);
+    if (ks == nullptr)
+        throw std::runtime_error("testKey6: no keys from '" + file + "'.");
+    auto keyNum = KeyStoreKeyNum(ks);
+    if (keyNum != 2)
+        throw std::runtime_error("testKey6: unexpected number of keys. Expected 2, got " + std::to_string(keyNum) + ".");
+    const auto certNum = KeyStoreCertNum(ks);
+    if (certNum != 0)
+        throw std::runtime_error("testKey6: unexpected number of certs. Expected 0, got " + std::to_string(certNum));
+    KeyStoreFree(ks);
 }
 
 }

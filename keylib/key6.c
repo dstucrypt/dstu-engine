@@ -39,7 +39,7 @@ static void pkdf(const char* password, size_t passSize, unsigned char* key)
         hash(key, 32, key);
 }
 
-static int decryptKey6(const void* data, size_t size, const void* pad, size_t padSize, const char* password, size_t passSize, EVP_PKEY*** keys, size_t* numKeys)
+static int decryptKey6(const void* data, size_t size, const void* pad, size_t padSize, const char* password, size_t passSize, KeyStore** ks)
 {
     gost_ctx ctx;
     gost_subst_block sbox;
@@ -60,12 +60,12 @@ static int decryptKey6(const void* data, size_t size, const void* pad, size_t pa
     gost_dec(&ctx, source, res, sourceSize / 8);
     OPENSSL_clear_free(source, sourceSize);
 
-    r = keysFromPKCS8(res, resSize, keys, numKeys);
+    r = keysFromPKCS8(res, resSize, ks);
     OPENSSL_clear_free(res, resSize);
     return r;
 }
 
-int parseKey6(const void* data, size_t size, const char* password, size_t passSize, EVP_PKEY*** keys, size_t* numKeys)
+int parseKey6(const void* data, size_t size, const char* password, size_t passSize, KeyStore** ks)
 {
     int res = 0;
     ASN1_OBJECT* correctType = NULL;
@@ -93,28 +93,28 @@ int parseKey6(const void* data, size_t size, const char* password, size_t passSi
         res = decryptKey6(ASN1_STRING_get0_data(store->data), ASN1_STRING_length(store->data),
                           NULL, 0,
                           password, passSize,
-                          keys, numKeys);
+                          ks);
     else
         res = decryptKey6(ASN1_STRING_get0_data(store->data), ASN1_STRING_length(store->data),
                           ASN1_STRING_get0_data(store->header->params->pad), ASN1_STRING_length(store->header->params->pad),
                           password, passSize,
-                          keys, numKeys);
+                          ks);
     IITStore_free(store);
     return res;
 }
 
-int readKey6(FILE* fp, const char* password, size_t passSize, EVP_PKEY*** keys, size_t* numKeys)
+int readKey6(FILE* fp, const char* password, size_t passSize, KeyStore** ks)
 {
     int res = 0;
     BIO* bio = BIO_new_fp(fp, 0);
     if (!bio)
         return 0;
-    res = readKey6_bio(bio, password, passSize, keys, numKeys);
+    res = readKey6_bio(bio, password, passSize, ks);
     BIO_free(bio);
     return res;
 }
 
-int readKey6_bio(BIO* bio, const char* password, size_t passSize, EVP_PKEY*** keys, size_t* numKeys)
+int readKey6_bio(BIO* bio, const char* password, size_t passSize, KeyStore** ks)
 {
     unsigned char buf[1024];
     BIO *mem = BIO_new(BIO_s_mem());
@@ -147,7 +147,7 @@ int readKey6_bio(BIO* bio, const char* password, size_t passSize, EVP_PKEY*** ke
         BIO_free(mem);
         return 0;
     }
-    res = parseKey6(ptr, bytes, password, passSize, keys, numKeys);
+    res = parseKey6(ptr, bytes, password, passSize, ks);
     BIO_free(mem);
     return res;
 }

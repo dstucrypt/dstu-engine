@@ -79,14 +79,10 @@ ENGINE_set_default(engine, ENGINE_METHOD_ALL);
 
 auto* fp = fopen(file.c_str(), "r");
 
-// Key-6.dat may contain 1 or 2 keys
-EVP_PKEY** keys = nullptr;
-size_t numKeys = 0;
-readKey6(fp, password.c_str(), password.length(), &keys, &numKeys);
+KeyStore* ks = NULL;
+readKey6(fp, password.c_str(), password.length(), &ks);
 
-// Delete all keys after use
-for (size_t i = 0; i < numKeys; ++i)
-    EVP_PKEY_free(keys[i]);
+KeyStoreFree(ks);
 OPENSSL_free(keys);
 
 fclose(fp);

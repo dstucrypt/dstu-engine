@@ -1,5 +1,7 @@
 #include "utils.h"
 
+#include "keystore_internal.h"
+
 #include "attrcurvespec_asn1.h"
 
 #include "asn1.h"
@@ -7,6 +9,7 @@
 #include "key.h"
 #include "params.h"
 
+#include <openssl/ossl_typ.h>
 #include <openssl/asn1.h>
 #include <openssl/bn.h>
 #include <openssl/crypto.h>
@@ -257,7 +260,7 @@ static EVP_PKEY* pkeyFromAttributes(const PKCS8_PRIV_KEY_INFO* pkcs8)
     return res;
 }
 
-int keysFromPKCS8(const void* data, size_t size, EVP_PKEY*** keys, size_t* numKeys)
+int keysFromPKCS8(const void* data, size_t size, KeyStore** ks)
 {
     const unsigned char* ptr = data;
     PKCS8_PRIV_KEY_INFO* pkcs8 = d2i_PKCS8_PRIV_KEY_INFO(NULL, &ptr, size);
@@ -278,16 +281,14 @@ int keysFromPKCS8(const void* data, size_t size, EVP_PKEY*** keys, size_t* numKe
 
     if (pkey2 == NULL)
     {
-        *keys = OPENSSL_malloc(sizeof(EVP_PKEY*));
-        (*keys)[0] = pkey1;
-        *numKeys = 1;
+        *ks = KeyStoreNew(1, 0);
+        KeyStoreSetKey(*ks, 0, pkey1);
         return 1;
     }
 
-    *keys = OPENSSL_malloc(sizeof(EVP_PKEY*) * 2);
-    (*keys)[0] = pkey1;
-    (*keys)[1] = pkey2;
-    *numKeys = 2;
+    *ks = KeyStoreNew(2, 0);
+    KeyStoreSetKey(*ks, 0, pkey1);
+    KeyStoreSetKey(*ks, 1, pkey2);
 
     return 1;
 }

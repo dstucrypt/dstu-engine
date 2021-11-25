@@ -1,4 +1,4 @@
-#include "jks.h"
+#include "pkcs12.h"
 #include "keystore.h"
 
 #include <openssl/evp.h>
@@ -23,23 +23,23 @@ std::string OPENSSLError() noexcept
     return buf.data();
 }
 
-void testJKS(const std::string& file, const std::string& storagePass, const std::string& keyPass)
+void testPKCS12(const std::string& file, const std::string& pass)
 {
     auto* fp = fopen(file.c_str(), "r");
     if (fp == nullptr)
-        throw std::runtime_error("testJKS: failed to open '" + file + "'. " + strerror(errno));
+        throw std::runtime_error("testPKCS12: failed to open '" + file + "'. " + strerror(errno));
     KeyStore* ks = nullptr;
-    if (readJKS(fp, storagePass.c_str(), storagePass.length(), keyPass.c_str(), keyPass.length(), &ks) == 0)
-        throw std::runtime_error("testJKS: failed to read key from '" + file + "'.");
+    if (readPKCS12(fp, pass.c_str(), pass.length(), &ks) == 0)
+        throw std::runtime_error("testPKCS12: failed to read key from '" + file + "'.");
     fclose(fp);
     if (ks == nullptr)
-        throw std::runtime_error("testJKS: no keys from '" + file + "'.");
+        throw std::runtime_error("testPKCS12: no keys from '" + file + "'.");
     const auto keyNum = KeyStoreKeyNum(ks);
     if (keyNum != 2)
-        throw std::runtime_error("testJKS: unexpected number of keys. Expected 2, got " + std::to_string(keyNum));
+        throw std::runtime_error("testPKCS12: unexpected number of keys. Expected 2, got " + std::to_string(keyNum));
     const auto certNum = KeyStoreCertNum(ks);
-    if (certNum != 3)
-        throw std::runtime_error("testJKS: unexpected number of certs. Expected 3, got " + std::to_string(certNum));
+    if (certNum != 0)
+        throw std::runtime_error("testPKCS12: unexpected number of certs. Expected 0, got " + std::to_string(certNum));
     KeyStoreFree(ks);
 }
 
@@ -62,7 +62,7 @@ int main()
 
     ENGINE_set_default(engine, ENGINE_METHOD_ALL);
 
-    testJKS("key.jks", "123456", "qwerty");
+    testPKCS12("Key-6.pfx", "testplat2021");
 
     ENGINE_finish(engine);
     ENGINE_free(engine);

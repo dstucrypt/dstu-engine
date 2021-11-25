@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.13)
-project(dstu-engine LANGUAGES C VERSION 1.2.2)
+project(dstu-engine LANGUAGES C VERSION 1.3.0)
 
 option(BUILD_TESTS "Build tests." OFF)
 option(ENABLE_CODECOV "Enable code coverage analysis." OFF)
@@ -25,6 +25,7 @@ bugprone-*,\
 -clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling,\
 -bugprone-easily-swappable-parameters,\
 -modernize-avoid-bind,\
+-misc-no-recursion,\
 -modernize-use-trailing-return-type,\
 -readability-braces-around-statements, \
 -readability-function-cognitive-complexity,\
