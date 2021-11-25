@@ -15,7 +15,7 @@
 extern "C" {
 #endif
 
-/** @fn int parseKey6(const void* data, size_t size, const char* password, size_t passSize, EVP_PKEY*** keys, size_t* numKeys)
+/** @fn int parseKey6(const void* data, size_t size, const char* password, size_t passSize, KeyStore** ks)
  *  @brief extracts private keys from IIT Key-6.dat container.
  *  @param data container data;
  *  @param size container data size;
@@ -26,7 +26,7 @@ extern "C" {
  */
 int parseKey6(const void* data, size_t size, const char* password, size_t passSize, KeyStore** ks);
 
-/** @fn int readKey6(FILE* fp, const char* password, size_t passSize, EVP_PKEY*** keys, size_t* numKeys)
+/** @fn int readKey6(FILE* fp, const char* password, size_t passSize, KeyStore** ks)
  *  @brief extracts private keys from IIT Key-6.dat container.
  *  @param fp file handle;
  *  @param password container encryption password;
@@ -36,7 +36,7 @@ int parseKey6(const void* data, size_t size, const char* password, size_t passSi
  */
 int readKey6(FILE* fp, const char* password, size_t passSize, KeyStore** ks);
 
-/** @fn int readKey6_bio(BIO* bio, const char* password, size_t passSize, EVP_PKEY*** keys, size_t* numKeys)
+/** @fn int readKey6_bio(BIO* bio, const char* password, size_t passSize, KeyStore** ks)
  *  @brief extracts private keys from IIT Key-6.dat container.
  *  @param bio OpenSSL BIO;
  *  @param password container encryption password;

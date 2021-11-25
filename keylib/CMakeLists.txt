@@ -14,5 +14,5 @@ install(TARGETS keylib
         LIBRARY DESTINATION lib
         ARCHIVE DESTINATION "lib"
         RUNTIME DESTINATION "bin")
-install(FILES keylib.h key6.h jks.h pkcs12.h
+install(FILES keylib.h keystore.h key6.h jks.h pkcs12.h
         DESTINATION "include")

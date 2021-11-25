@@ -15,7 +15,7 @@
 extern "C" {
 #endif
 
-/** @fn int parseJKS(const void* data, size_t size, const char* password, size_t passSize, JKS** keys)
+/** @fn int parseJKS(const void* data, size_t size, const char* storagePass, size_t storagePassSize, const char* keyPass, size_t keyPassSize, KeyStore** ks)
  *  @brief extracts private keys and certs from Java Key Store.
  *  @param data container data;
  *  @param size container data size;
@@ -28,7 +28,7 @@ extern "C" {
  */
 int parseJKS(const void* data, size_t size, const char* storagePass, size_t storagePassSize, const char* keyPass, size_t keyPassSize, KeyStore** ks);
 
-/** @fn int readJKS(FILE* fp, const char* password, size_t passSize, JKS** keys)
+/** @fn int readJKS(FILE* fp, const char* storagePass, size_t storagePassSize, const char* keyPass, size_t keyPassSize, KeyStore** ks)
  *  @brief extracts private keys and certs from Java Key Store file.
  *  @param fp file handle;
  *  @param storagePass container password;
@@ -40,7 +40,7 @@ int parseJKS(const void* data, size_t size, const char* storagePass, size_t stor
  */
 int readJKS(FILE* fp, const char* storagePass, size_t storagePassSize, const char* keyPass, size_t keyPassSize, KeyStore** ks);
 
-/** @fn int readJKS_bio(BIO* bio, const char* password, size_t passSize, JKS** keys)
+/** @fn int readJKS_bio(BIO* bio, const char* storagePass, size_t storagePassSize, const char* keyPass, size_t keyPassSize, KeyStore** ks)
  *  @brief extracts private keys and certs from Java Key Store using OpenSSL BIO interface.
  *  @param bio OpenSSL BIO;
  *  @param storagePass container password;
