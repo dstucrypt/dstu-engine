@@ -11,10 +11,12 @@ target_include_directories(common PRIVATE "${CMAKE_SOURCE_DIR}/keylib")
 
 add_executable(test_engine test.cpp)
 target_link_libraries(test_engine PUBLIC common keylib coverage_config OpenSSL::Crypto)
+target_include_directories(test_engine PRIVATE "${CMAKE_SOURCE_DIR}/keylib")
 add_test(test_engine test_engine)
 
 add_executable(test_dstu dstu.cpp)
 target_link_libraries(test_dstu PUBLIC common keylib coverage_config OpenSSL::Crypto)
+target_include_directories(test_dstu PRIVATE "${CMAKE_SOURCE_DIR}/keylib")
 add_test(test_dstu test_dstu)
 
 add_executable(test_key6 key6.cpp)
