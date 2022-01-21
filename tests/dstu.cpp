@@ -1,3 +1,5 @@
+#include "error.h"
+
 #include <array>
 #include <memory>
 #include <stdexcept>
@@ -7,6 +9,8 @@
 #include <openssl/conf.h>
 
 #include <cstring>
+
+using DSTUEngine::OPENSSLError;
 
 namespace
 {
@@ -48,13 +52,6 @@ const std::array<TestVector, 3> vectors{
     {c257, 33, e257, d257, s257},
     {c431, 54, e431, d431, s431}
 }};
-
-std::string OPENSSLError() noexcept
-{
-    std::array<char, 256> buf{};
-    ERR_error_string_n(ERR_get_error(), buf.data(), buf.size());
-    return buf.data();
-}
 
 int fbytes(unsigned char *buf, int num);
 

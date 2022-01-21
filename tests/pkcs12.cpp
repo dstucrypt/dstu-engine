@@ -1,5 +1,8 @@
 #include "pkcs12.h"
+
+#include "signverify.h"
 #include "keystore.h"
+#include "error.h"
 
 #include <openssl/evp.h>
 #include <openssl/engine.h>
@@ -13,17 +16,13 @@
 #include <cstring>
 #include <cerrno>
 
+using DSTUEngine::OPENSSLError;
+using DSTUEngine::testSignVerify;
+
 namespace
 {
 
-std::string OPENSSLError() noexcept
-{
-    std::array<char, 256> buf{};
-    ERR_error_string_n(ERR_get_error(), buf.data(), buf.size());
-    return buf.data();
-}
-
-void testPKCS12(const std::string& file, const std::string& pass)
+void testPKCS12(ENGINE* engine, const std::string& file, const std::string& pass)
 {
     auto* fp = fopen(file.c_str(), "r");
     if (fp == nullptr)
@@ -40,6 +39,8 @@ void testPKCS12(const std::string& file, const std::string& pass)
     const auto certNum = KeyStoreCertNum(ks);
     if (certNum != 0)
         throw std::runtime_error("testPKCS12: unexpected number of certs. Expected 0, got " + std::to_string(certNum));
+    std::string data = "Hello, World!";
+    testSignVerify(engine, ks, data.c_str(), data.length());
     KeyStoreFree(ks);
 }
 
@@ -62,7 +63,7 @@ int main()
 
     ENGINE_set_default(engine, ENGINE_METHOD_ALL);
 
-    testPKCS12("Key-6.pfx", "testplat2021");
+    testPKCS12(engine, "Key-6.pfx", "testplat2021");
 
     ENGINE_finish(engine);
     ENGINE_free(engine);

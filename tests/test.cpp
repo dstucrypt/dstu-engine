@@ -1,3 +1,8 @@
+#include "error.h"
+#include "signverify.h"
+#include "block.h"
+#include "hex.h"
+
 #include <openssl/evp.h>
 #include <openssl/pem.h>
 #include <openssl/cms.h>
@@ -16,6 +21,12 @@
 #include <cstring>
 #include <cerrno>
 
+using DSTUEngine::OPENSSLError;
+using DSTUEngine::testVerify;
+using DSTUEngine::testSignVerify;
+using DSTUEngine::checkBlock;
+using DSTUEngine::printBlock;
+
 namespace
 {
 namespace DSTU28417
@@ -25,82 +36,6 @@ constexpr std::array<unsigned char, 32> key{ 0,  1,  2,  3,  4,  5,  6,  7,
                                             16, 17, 18, 19, 20, 21, 22, 23,
                                             24, 25, 26, 27, 28, 29, 30, 31};
 constexpr std::array<unsigned char, 8> iv{7, 6, 5, 4, 3, 2, 1, 0};
-}
-
-std::string OPENSSLError() noexcept
-{
-    std::array<char, 256> buf{};
-    ERR_error_string_n(ERR_get_error(), buf.data(), buf.size());
-    return buf.data();
-}
-
-unsigned char fromHex(char a)
-{
-    if (a >= '0' && a <= '9')
-        return a - '0';
-    if (a >= 'a' && a <= 'f')
-        return a - 'a' + 10;
-    if (a >= 'A' && a <= 'F')
-        return a - 'A' + 10;
-    throw std::runtime_error("fromHex: invalid hex char: '" + std::string(1, a) + "'");
-}
-
-unsigned char fromHex(char a, char b)
-{
-    return fromHex(a) * 16 + fromHex(b);
-}
-
-std::vector<unsigned char> makeBlock(const std::string& hex)
-{
-    std::vector<unsigned char> res;
-    for (size_t i = 0; i < hex.size();)
-    {
-        if (hex[i] == ' ')
-        {
-            ++i;
-            continue;
-        }
-        res.push_back(fromHex(hex[i], hex[i + 1]));
-        i += 2;
-    }
-    return res;
-}
-
-void checkBlock(const void* data, size_t size, const std::string& hexEtalon)
-{
-    size_t pos = 0;
-    const auto* ptr = static_cast<const unsigned char*>(data);
-    for (size_t i = 0; i < hexEtalon.size();)
-    {
-        if (i == hexEtalon.size() - 1)
-            throw std::runtime_error("checkBlock: bad etalon, odd data at position #" + std::to_string(i));
-        if (hexEtalon[i] == ' ')
-        {
-            ++i;
-            continue;
-        }
-        if (pos >= size)
-            throw std::runtime_error("checkBlock: etalon is bigger than the data. Data size: " + std::to_string(size));
-        if (ptr[pos] != fromHex(hexEtalon[i], hexEtalon[i + 1]))
-            throw std::runtime_error("checkBlock: bad data at position #" + std::to_string(pos));
-        ++pos;
-        i += 2;
-    }
-}
-
-void printBlock(const void* data, size_t size)
-{
-    const auto* ptr = static_cast<const uint8_t*>(data);
-    bool first = true;
-    for (size_t i = 0; i < size; ++i)
-    {
-        if (first)
-            first = false;
-        else
-            std::cout << " ";
-        std::cout << std::setw(2) << std::setfill('0') << std::hex << (unsigned)ptr[i];
-    }
-    std::cout << std::dec << "\n";
 }
 
 EVP_PKEY* readPubKey(const std::string& file)
@@ -218,65 +153,6 @@ std::vector<unsigned char> decrypt(ENGINE* engine, const void* data, size_t size
     return res;
 }
 
-std::vector<unsigned char> sign(ENGINE* engine, const EVP_MD* md, EVP_PKEY* priv, const void* data, size_t size)
-{
-    auto* mdctx = EVP_MD_CTX_create();
-    if (mdctx == nullptr)
-        throw std::runtime_error("sign: failed to create digest context. " + OPENSSLError());
-    if (EVP_DigestSignInit(mdctx, nullptr, md, engine, priv) == 0)
-    {
-        EVP_MD_CTX_destroy(mdctx);
-        throw std::runtime_error("sign: failed to initialize signature. " + OPENSSLError());
-    }
-    if (EVP_DigestSignUpdate(mdctx, data, size) == 0)
-    {
-        EVP_MD_CTX_destroy(mdctx);
-        throw std::runtime_error("sign: failed to update signature. " + OPENSSLError());
-    }
-    size_t len = 0;
-    if (EVP_DigestSignFinal(mdctx, nullptr, &len) == 0)
-    {
-        EVP_MD_CTX_destroy(mdctx);
-        throw std::runtime_error("sign: failed to get signature length. " + OPENSSLError());
-    }
-    if (len == 0)
-    {
-        EVP_MD_CTX_destroy(mdctx);
-        throw std::runtime_error("sign: invalid signature length. " + std::to_string(len));
-    }
-    std::vector<unsigned char> res(len);
-    if (EVP_DigestSignFinal(mdctx, res.data(), &len) == 0)
-    {
-        EVP_MD_CTX_destroy(mdctx);
-        throw std::runtime_error("sign: failed to get signature length. " + OPENSSLError());
-    }
-    EVP_MD_CTX_destroy(mdctx);
-    return res;
-}
-
-void verify(ENGINE* engine, const EVP_MD* md, EVP_PKEY* pub, const std::vector<unsigned char>& signature, const void* data, size_t size)
-{
-    auto* mdctx = EVP_MD_CTX_create();
-    if (mdctx == nullptr)
-        throw std::runtime_error("verify: failed to create digest context. " + OPENSSLError());
-    if (EVP_DigestVerifyInit(mdctx, nullptr, md, engine, pub) == 0)
-    {
-        EVP_MD_CTX_destroy(mdctx);
-        throw std::runtime_error("verify: failed to initialize verification. " + OPENSSLError());
-    }
-    if (EVP_DigestVerifyUpdate(mdctx, data, size) == 0)
-    {
-        EVP_MD_CTX_destroy(mdctx);
-        throw std::runtime_error("verify: failed to update verification. " + OPENSSLError());
-    }
-    if (EVP_DigestVerifyFinal(mdctx, signature.data(), signature.size()) != 1)
-    {
-        EVP_MD_CTX_destroy(mdctx);
-        throw std::runtime_error("verify: signature verification failed. " + OPENSSLError());
-    }
-    EVP_MD_CTX_destroy(mdctx);
-}
-
 void testHash(ENGINE* engine, const void* data, size_t size, const std::string& etalon)
 {
     auto hash = makeHash(engine, data, size);
@@ -329,22 +205,6 @@ void testDecrypt(ENGINE* engine, const void* data, size_t size, const std::strin
         std::cout << "   Expected: " << etalon << std::endl;
         throw;
     }
-}
-
-void testSignVerify(ENGINE* engine, EVP_PKEY* pub, EVP_PKEY* priv, const void* data, size_t size)
-{
-    auto* md = ENGINE_get_digest(engine, NID_dstu34311);
-    if (md == nullptr)
-        throw std::runtime_error("testSignVerify: failed to get digest. " + OPENSSLError());
-    verify(engine, md, pub, sign(engine, md, priv, data, size), data, size);
-}
-
-void testVerify(ENGINE* engine, EVP_PKEY* pub, const std::string& signature, const void* data, size_t size)
-{
-    auto* md = ENGINE_get_digest(engine, NID_dstu34311);
-    if (md == nullptr)
-        throw std::runtime_error("testVerify: failed to get digest. " + OPENSSLError());
-    verify(engine, md, pub, makeBlock(signature), data, size);
 }
 
 void testVerifyCMS(ENGINE* engine, const std::string& file)

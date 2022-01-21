@@ -6,26 +6,28 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 find_package(OpenSSL 1.1.0 REQUIRED)
 
+add_library(common OBJECT signverify.cpp block.cpp hex.cpp error.cpp)
+
 add_executable(test_engine test.cpp)
-target_link_libraries(test_engine PUBLIC coverage_config OpenSSL::Crypto)
+target_link_libraries(test_engine PUBLIC common keylib coverage_config OpenSSL::Crypto)
 add_test(test_engine test_engine)
 
 add_executable(test_dstu dstu.cpp)
-target_link_libraries(test_dstu PUBLIC coverage_config OpenSSL::Crypto)
+target_link_libraries(test_dstu PUBLIC common keylib coverage_config OpenSSL::Crypto)
 add_test(test_dstu test_dstu)
 
 add_executable(test_key6 key6.cpp)
-target_link_libraries(test_key6 PUBLIC coverage_config keylib OpenSSL::Crypto)
+target_link_libraries(test_key6 PUBLIC common coverage_config keylib OpenSSL::Crypto)
 target_include_directories(test_key6 PRIVATE "${CMAKE_SOURCE_DIR}/keylib")
 add_test(test_key6 test_key6)
 
 add_executable(test_jks jks.cpp)
-target_link_libraries(test_jks PUBLIC coverage_config keylib OpenSSL::Crypto)
+target_link_libraries(test_jks PUBLIC common coverage_config keylib OpenSSL::Crypto)
 target_include_directories(test_jks PRIVATE "${CMAKE_SOURCE_DIR}/keylib")
 add_test(test_jks test_jks)
 
 add_executable(test_pkcs12 pkcs12.cpp)
-target_link_libraries(test_pkcs12 PUBLIC coverage_config keylib OpenSSL::Crypto)
+target_link_libraries(test_pkcs12 PUBLIC common coverage_config keylib OpenSSL::Crypto)
 target_include_directories(test_pkcs12 PRIVATE "${CMAKE_SOURCE_DIR}/keylib")
 add_test(test_pkcs12 test_pkcs12)
 
