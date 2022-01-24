@@ -114,12 +114,14 @@ static EC_GROUP* makeECGROUPFromSpec(BN_CTX* ctx, const DSTU_CustomCurveSpec* sp
     BIGNUM* b = BN_bin2bn(ASN1_STRING_get0_data(spec->b), ASN1_STRING_length(spec->b), BN_CTX_get(ctx));
     BIGNUM* n = BN_CTX_get(ctx);
     EC_POINT* point = NULL;
-    EC_GROUP* res = EC_GROUP_new_curve_GF2m(poly, a, b, ctx);
+    EC_GROUP* res = NULL;
+
+    ASN1_INTEGER_to_BN(spec->a, a);
+
+    res = EC_GROUP_new_curve_GF2m(poly, a, b, ctx);
 
     if (res == NULL)
         return NULL;
-
-    ASN1_INTEGER_to_BN(spec->a, a);
 
     point = makePoint(ctx, res, spec->bp);
     if (point == NULL)
