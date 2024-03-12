@@ -394,7 +394,11 @@ static int dstu_pkey_verify(EVP_PKEY_CTX *ctx, const unsigned char *sig,
     return ret;
 }
 
+#ifdef COPY_2ND_ARG_IS_CONST
+static int dstu_pkey_copy(EVP_PKEY_CTX *dst, const EVP_PKEY_CTX *src)
+#else
 static int dstu_pkey_copy(EVP_PKEY_CTX *dst, EVP_PKEY_CTX *src)
+#endif
 {
     DSTU_KEY_CTX *dstu_src_ctx = EVP_PKEY_CTX_get_data(src), *dstu_dst_ctx;
 

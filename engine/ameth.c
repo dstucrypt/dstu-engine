@@ -391,7 +391,11 @@ void dstu_asn1_pkey_free(EVP_PKEY *pkey)
         DSTU_KEY_free(key);
 }
 
+#ifdef DECODE_2ND_ARG_IS_CONST
+static int dstu_asn1_pub_decode(EVP_PKEY *pk, const X509_PUBKEY *pub)
+#else
 static int dstu_asn1_pub_decode(EVP_PKEY *pk, X509_PUBKEY *pub)
+#endif
 {
     const ASN1_OBJECT *algoid = NULL;
     const unsigned char *pbk_buf = NULL;
