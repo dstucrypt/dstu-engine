@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.13)
-project(dstu-engine LANGUAGES C VERSION 1.3.2)
+project(dstu-engine LANGUAGES C VERSION 1.3.3)
 include(GNUInstallDirs)
 
 option(BUILD_TESTS "Build tests." OFF)

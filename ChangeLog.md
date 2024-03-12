@@ -49,3 +49,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.3.2] - 2023-09-20
 ### Fixed.
  - Installation paths for keylib and headers.
+
+## [1.3.3] - 2024-04-12
+### Added.
+ - Check for support of elliptic curves over GF2m in OpenSSL (#20).
+
+### Fixed.
+ - Building tests (#22).
