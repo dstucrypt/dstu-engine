@@ -6,6 +6,8 @@
 #include <iomanip>
 #include <stdexcept>
 
+#include <cstdint>
+
 std::vector<unsigned char> DSTUEngine::makeBlock(const std::string& hex)
 {
     std::vector<unsigned char> res;

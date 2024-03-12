@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.13)
-include(GNUInstallDirs)
 project(dstu-engine LANGUAGES C VERSION 1.3.2)
+include(GNUInstallDirs)
 
 option(BUILD_TESTS "Build tests." OFF)
 option(ENABLE_CODECOV "Enable code coverage analysis." OFF)
