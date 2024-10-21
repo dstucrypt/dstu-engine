@@ -69,6 +69,11 @@ add_subdirectory(dstulib)
 add_subdirectory(engine)
 add_subdirectory(keylib)
 
+target_include_directories(dstulib PRIVATE ${OPENSSL_INCLUDE_DIR})
+
+find_library(ICONV_LIBRARY NAMES iconv libiconv)
+target_link_libraries(keylib PRIVATE ${ICONV_LIBRARY})
+
 if(BUILD_TESTS)
     enable_testing()
     add_subdirectory(tests)
