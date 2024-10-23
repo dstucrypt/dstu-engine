@@ -1,6 +1,9 @@
+find_package(OpenSSL 1.1.0 REQUIRED)
+
 add_library(dstulib OBJECT key.c asn1.c compress.c params.c)
 target_include_directories(dstulib INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
 set_target_properties(dstulib PROPERTIES POSITION_INDEPENDENT_CODE ON)
+target_link_libraries(dstulib PRIVATE OpenSSL::Crypto)
 
 if(CLANG_TIDY_EXE)
     set_target_properties(dstulib PROPERTIES C_CLANG_TIDY "${DO_CLANG_TIDY}")
