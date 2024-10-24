@@ -78,10 +78,10 @@ jobs:
       working-directory: ${{runner.workspace}}/build
       shell: bash
       run: |
-        lcov --capture --directory . --output-file coverage.info
-        lcov --remove coverage.info '/usr/*' --output-file coverage.info # filter system-files
-        lcov --remove coverage.info '**/tests/**' --output-file coverage.info # filter tests
-        lcov --list coverage.info # debug info
+        lcov --capture --directory . --output-file coverage.info --ignore-errors=inconsistent,mismatch,negative,unused
+        lcov --remove coverage.info '/usr/*' --output-file coverage.info --ignore-errors=inconsistent,mismatch,negative,unused # filter system-files
+        lcov --remove coverage.info '**/tests/**' --output-file coverage.info --ignore-errors=inconsistent,mismatch,negative,unused # filter tests
+        lcov --list coverage.info --ignore-errors=inconsistent,mismatch,negative,unused # debug info
 
     - name: Codecov
       uses: codecov/codecov-action@v1.0.14
