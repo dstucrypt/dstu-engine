@@ -67,7 +67,12 @@ jobs:
       run: ctest -C ${{ matrix.config.build_type }}
 
     - name: Install lcov
+      if: matrix.config.os == 'ubuntu-latest'
       run: sudo apt install lcov
+
+    - name: Install lcov
+      if: matrix.config.os == 'macos-latest'
+      run: brew install lcov
 
     - name: Generate coverage report
       working-directory: ${{runner.workspace}}/build
