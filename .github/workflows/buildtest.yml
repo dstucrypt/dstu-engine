@@ -76,6 +76,17 @@ jobs:
 
     - name: Generate coverage report
       working-directory: ${{runner.workspace}}/build
+      if: matrix.config.os == 'ubuntu-latest'
+      shell: bash
+      run: |
+        lcov --capture --directory . --output-file coverage.info
+        lcov --remove coverage.info '/usr/*' --output-file coverage.info # filter system-files
+        lcov --remove coverage.info '**/tests/**' --output-file coverage.info # filter tests
+        lcov --list coverage.info # debug info
+
+    - name: Generate coverage report
+      working-directory: ${{runner.workspace}}/build
+      if: matrix.config.os == 'macos-latest'
       shell: bash
       run: |
         lcov --capture --directory . --output-file coverage.info --ignore-errors=inconsistent,mismatch,negative,unused
