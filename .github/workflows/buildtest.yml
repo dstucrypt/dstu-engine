@@ -2,9 +2,6 @@ name: Build and test
 
 on: [push, pull_request]
 
-env:
-  # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
-
 jobs:
   build:
     name: ${{ matrix.config.name }}
