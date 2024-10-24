@@ -8,6 +8,7 @@ find_package(OpenSSL 1.1.0 REQUIRED)
 
 add_library(common OBJECT signverify.cpp block.cpp hex.cpp error.cpp)
 target_include_directories(common PRIVATE "${CMAKE_SOURCE_DIR}/keylib")
+target_link_libraries(common PRIVATE OpenSSL::Crypto)
 
 add_executable(test_engine test.cpp)
 target_link_libraries(test_engine PUBLIC common keylib coverage_config OpenSSL::Crypto)

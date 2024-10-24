@@ -1,7 +1,9 @@
 find_package(OpenSSL 1.1.0 REQUIRED)
 
+find_package(Iconv)
+
 add_library(keylib SHARED key6.c iit_asn1.c jks.c pkcs12.c keystore.c utils.c attrcurvespec_asn1.c)
-target_link_libraries(keylib PUBLIC dstulib coverage_config OpenSSL::Crypto)
+target_link_libraries(keylib PUBLIC dstulib coverage_config OpenSSL::Crypto Iconv::Iconv)
 
 if(CLANG_TIDY_EXE)
     set_target_properties(keylib PROPERTIES C_CLANG_TIDY "${DO_CLANG_TIDY}")
