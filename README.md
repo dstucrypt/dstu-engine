@@ -19,6 +19,7 @@ This project is based on `dstucrypt/openssl-dstu` repository which is a fork of 
  * PKCS#12 - archive file format from the RSA Labs.
 
 ## Building and installation instructions
+### Linux:
 ```
 mkdir build
 cd build
@@ -26,6 +27,17 @@ cmake ..
 make
 sudo make install
 ```
+
+### MacOS X:
+On MacOS X the OS uses LibreSSL and it is intended only for internal purposes. Users must install OpenSSL separately, using Brew, MacPorts or a custom build. CMake can not distinguish between system LibreSSL and user OpenSSL, so you need to provide root dir, lib path and engines dir manualy. Here is an example for OpenSSL installed using Brew:
+```
+mkdir build
+cd build
+cmake -DOPENSSL_ROOT_DIR=$(brew --prefix openssl) -DOPENSSL_LIBRARIES=$(brew --prefix openssl)/lib -DOPENSSL_ENGINES_DIR=$(brew --prefix openssl)/lib ..
+make
+sudo make install
+```
+
 #### Build options:
  * BUILD_TESTS - enable testing, default OFF.
  * ENABLE_CODECOV - enable code coverage analysis, default OFF.

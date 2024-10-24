@@ -56,3 +56,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed.
  - Building tests (#22).
+
+## [1.3.4] - 2024-10-24
+### Added.
+ - GitHub workflow for building and testing on MacOSX.
+
+### Fixed.
+ - Build on MaxOSX.
