@@ -1,6 +1,6 @@
-FROM gcc
+FROM gcc:12.4.0
 
-RUN apt-get purge -y cmake
+RUN apt-get update && apt-get purge -y cmake
 
 WORKDIR /tmp/cmake
 RUN wget https://cmake.org/files/v3.19/cmake-3.19.1.tar.gz && \
@@ -20,6 +20,7 @@ COPY engine          dstu-engine/engine
 COPY keylib          dstu-engine/keylib
 COPY tests           dstu-engine/tests
 COPY Doxyfile        dstu-engine/Doxyfile
+COPY checks          dstu-engine/checks
 COPY CMakeLists.txt  dstu-engine/CMakeLists.txt
 WORKDIR /dstu-engine/build
 RUN cmake ..
